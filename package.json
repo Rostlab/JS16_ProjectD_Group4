@@ -1,0 +1,32 @@
+{
+  "name": "got-sentiment",
+  "version": "0.0.1",
+  "description": "GoT Twitter Sentiment Analysis",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rostlab/JS16_ProjectD_Group4.git"
+  },
+  "keywords": [
+    "got",
+    "sentiment",
+    "twitter",
+    "game",
+    "of",
+    "thrones",
+    "analysis"
+  ],
+  "author": "Santanu Mohanta, Marcus Novotny, Julien Schmidt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rostlab/JS16_ProjectD_Group4/issues"
+  },
+  "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
