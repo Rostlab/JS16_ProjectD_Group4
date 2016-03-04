@@ -1,7 +1,8 @@
 "use strict";
 
-const fs = require('fs');
-const express = require('express');
+const fs = require('fs'),
+      express = require('express'),
+      mongoose = require('mongoose');
 
 // read config
 var cfg;
@@ -16,6 +17,9 @@ try {
     process.exit(1);
 }
 GLOBAL.cfg = cfg;
+
+// connect to mongodb
+mongoose.connect(cfg.mongodb.uri);
 
 // init express application
 const app = express();

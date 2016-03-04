@@ -28,7 +28,7 @@
   "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
   "dependencies": {
     "express": "^4.13.4",
-    "mongodb": "^2.1.7"
+    "mongoose": "^4.4.6"
   },
   "devDependencies": {
     "grunt": "^0.4.5",

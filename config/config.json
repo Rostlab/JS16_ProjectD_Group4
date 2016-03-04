@@ -1,10 +1,7 @@
 {
   "port": "1337",
-  "db": {
-    "host": "",
-    "user": "",
-    "pass": "",
-    "collection": "got"
+  "mongodb": {
+    "uri": "mongodb://localhost/got-sentiment"
   },
   "twitter": {
     "access_token_key": "",
