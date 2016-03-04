@@ -21,6 +21,9 @@ const tweetSchema = mongoose.Schema({
     // retweet count
     retweets: {type: Number, default: 0},
 
+    // sentiment score for tweet's text
+    sentiment: {type: Number, default: 0},
+
     // date when tweet was created
     created: {type: Date, required: true},
 
