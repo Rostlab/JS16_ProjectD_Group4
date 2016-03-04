@@ -1,0 +1,15 @@
+{
+  "port": "1337",
+  "db": {
+    "host": "",
+    "user": "",
+    "pass": "",
+    "collection": "got"
+  },
+  "twitter": {
+    "access_token_key": "",
+    "access_token_secret": "",
+    "consumer_key": "",
+    "consumer_secret": ""
+  }
+}
