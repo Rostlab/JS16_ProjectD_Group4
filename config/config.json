@@ -3,6 +3,10 @@
   "mongodb": {
     "uri": "mongodb://localhost/got-sentiment"
   },
+  "got-api": {
+    "host": "got-api.bruck.me",
+    "prefix": "/api/"
+  },
   "twitter": {
     "access_token_key": "",
     "access_token_secret": "",
