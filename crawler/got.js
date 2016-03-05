@@ -16,7 +16,7 @@ function apiGet(path, onSuccess, onErr) {
         });
 
         res.on('end', function() {
-            onSuccess(res.statusCode, JSON.parse(data))
+            onSuccess(res.statusCode, JSON.parse(data));
         });
     });
 
@@ -30,4 +30,4 @@ function apiGet(path, onSuccess, onErr) {
 
 exports.fetchCharacters = function(onSuccess, onErr) {
     apiGet('characters', onSuccess, onErr);
-}
+};
