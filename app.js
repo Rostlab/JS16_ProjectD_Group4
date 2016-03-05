@@ -1,7 +1,8 @@
 "use strict";
 
-const fs = require('fs'),
-      express = require('express'),
+const fs       = require('fs'),
+      express  = require('express'),
+      exphbs   = require('express-handlebars'),
       mongoose = require('mongoose');
 
 // read config
@@ -23,11 +24,12 @@ mongoose.connect(cfg.mongodb.uri);
 
 // init express application
 const app = express();
-const router = express.Router();
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
 
 // register routes
-router.get('/', function(req, res) {
-  res.end('Yippeeee!');
+app.get('/', function(req, res) {
+    res.render("home");
 });
 
 // serve static content from /public dir
@@ -35,6 +37,5 @@ const oneDay = 86400000;
 app.use(express.static(__dirname + '/public', { maxAge: oneDay }));
 
 // start server
-app.use(router);
 app.listen(cfg.port);
 console.log('server running on port ' + cfg.port);
