@@ -24,8 +24,8 @@ mongoose.connect(cfg.mongodb.uri);
 
 // init express application
 const app = express();
-app.engine('handlebars', exphbs({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
+app.engine('.html', exphbs({defaultLayout: 'main', extname: '.html'}));
+app.set('view engine', '.html');
 
 // register routes
 app.get('/', function(req, res) {
