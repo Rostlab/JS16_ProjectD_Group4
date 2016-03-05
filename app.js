@@ -1,23 +1,9 @@
 "use strict";
 
-const fs       = require('fs'),
+const cfg      = require('./core/config'),
       express  = require('express'),
       exphbs   = require('express-handlebars'),
       mongoose = require('mongoose');
-
-// read config
-var cfg;
-try {
-    cfg = JSON.parse(fs.readFileSync('./config/config.json', 'utf8'));
-} catch (e) {
-    if (e.code === 'ENOENT') {
-        console.log('Error: Config file not found!');
-    } else {
-        console.log('Error:', e);
-    }
-    process.exit(1);
-}
-GLOBAL.cfg = cfg;
 
 // connect to mongodb
 mongoose.connect(cfg.mongodb.uri);
