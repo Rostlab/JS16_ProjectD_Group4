@@ -1,3 +1,9 @@
+# Let's not leak our passwords and API keys :)
+config/config.json
+
+# mongodb
+data/db/
+
 # Logs
 logs
 *.log
