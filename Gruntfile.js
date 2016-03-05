@@ -3,8 +3,9 @@ module.exports = function(grunt) {
     jshint: {
       all: [
         'app.js',
+        'config.json',
         'Gruntfile.js',
-        'config/config.json',
+        'crawler/*.js',
         'controllers/*.js',
         'models/*.js'
       ],

@@ -26,12 +26,12 @@ exports.fetchTweets = function(query, maxID, i) {
         }
 
         if (typeof data.statuses !== "object" || data.statuses.length < 1) {
-            console.log("No data!")
+            console.log("No data!");
             return;
         }
 
         const oldestStatus = data.statuses[data.statuses.length-1];
-        const oldestID_str = oldestStatus.id_str
+        const oldestID_str = oldestStatus.id_str;
         const oldestID = parseInt(oldestID_str);
 
         console.log(maxID, oldestID_str, oldestID, oldestStatus.created_at, '\n');
@@ -82,4 +82,4 @@ exports.fetchTweets = function(query, maxID, i) {
             exports.fetchTweets(query, oldestID, i-1);
         }
     });
-}
+};
