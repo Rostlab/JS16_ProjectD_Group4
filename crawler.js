@@ -18,31 +18,19 @@ db.once('open', function () {
     console.log('connected.');
 });
 
-function addCharacter(character) {
-    Character.update(
-        { _id: character._id },
-        { $setOnInsert: {
-            "_id":  character._id,
-            "name": character.name,
-            "slug": slug(character.name, {lower: true})
-        } },
-        { upsert: true },
-        function(err, res) {
-            if (err != null) {
-                console.log("update character", character.name, "FAILED:", err);
-            } else {
-                console.log("update character", character.name, res);
-            }
-        }
-    );
-}
+// TODO: fetch and add episodes when the API is ready
 
 got.fetchCharacters(function(status, characters) {
     console.log("status", status);
 
-    for (var i = 0; i < characters.length; i++) {
-        addCharacter(characters[i]);
-    };
+    characters.forEach(function(character) {
+        // TODO: skip if created / updated date < last checked date
+        Character.addIfNotExists({
+            "_id":  character._id,
+            "name": character.name,
+            "slug": slug(character.name, {lower: true})
+        });
+    });
 }, function(err) {
     console.log("Fetch Error:", err);
 });

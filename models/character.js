@@ -24,12 +24,30 @@ const characterSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-var exports = module.exports = mongoose.model('Character', characterSchema);
+var model = mongoose.model('Character', characterSchema);
 
-// callback: function(character)
-// onErr:    function(err)
-exports.forEach = function(callback, onErr) {
-    exports.find({}, function(err, characters) {
+// Add character to DB only if does not exist in the DB yet
+// TODO: callbacks
+model.addIfNotExists = function(character) {
+    model.update(
+        { _id: character._id },
+        { $setOnInsert: character },
+        { upsert: true },
+        function(err, res) {
+            if (err != null) {
+                console.log("DEBUG: update character", character.name, "FAILED:", err);
+            } else {
+                console.log("DEBUG: update character", character.name, res);
+            }
+        }
+    );
+};
+
+// Call function for each character in DB
+//  callback: function(character)
+//  onErr:    function(err)
+model.forEach = function(callback, onErr) {
+    model.find({}, function(err, characters) {
         if (err !== null) {
             if (!!onErr) {
                 onErr(err);
@@ -39,3 +57,5 @@ exports.forEach = function(callback, onErr) {
         characters.forEach(callback);
     });
 };
+
+module.exports = model;
