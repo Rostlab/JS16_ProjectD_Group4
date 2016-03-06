@@ -18,30 +18,15 @@ db.once('open', function () {
     console.log('connected.');
 });
 
-function addCharacter(character) {
-    Character.update(
-        { _id: character._id },
-        { $setOnInsert: {
-            "_id":  character._id,
-            "name": character.name,
-            "slug": slug(character.name, {lower: true})
-        } },
-        { upsert: true },
-        function(err, res) {
-            if (err != null) {
-                console.log("update character", character.name, "FAILED:", err);
-            } else {
-                console.log("update character", character.name, res);
-            }
-        }
-    );
-}
-
 got.fetchCharacters(function(status, characters) {
     console.log("status", status);
 
     for (var i = 0; i < characters.length; i++) {
-        addCharacter(characters[i]);
+        Character.addIfNotExists({
+            "_id":  character._id,
+            "name": character.name,
+            "slug": slug(character.name, {lower: true})
+        });
     };
 }, function(err) {
     console.log("Fetch Error:", err);

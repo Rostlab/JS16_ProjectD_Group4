@@ -3,6 +3,9 @@ const cfg = require('../core/config'),
 
 var exports = module.exports = {};
 
+// Make an API GET request and return response as JSON
+//  onSuccess: function(status, jsonResponse)
+//  onErr:     function(err)
 function apiGet(path, onSuccess, onErr) {
     var req = https.request({
         host: cfg.api.host,
@@ -28,6 +31,9 @@ function apiGet(path, onSuccess, onErr) {
     req.end();
 }
 
+// Get all characaters as JSON
+//  onSuccess: function(status, characters)
+//  onErr:     function(err)
 exports.fetchCharacters = function(onSuccess, onErr) {
     apiGet('characters', onSuccess, onErr);
 };
