@@ -24,6 +24,7 @@ got.fetchCharacters(function(status, characters) {
     console.log("status", status);
 
     for (var i = 0; i < characters.length; i++) {
+        // TODO: skip if created / updated date < last checked date
         Character.addIfNotExists({
             "_id":  character._id,
             "name": character.name,
