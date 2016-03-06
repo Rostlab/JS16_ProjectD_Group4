@@ -20,12 +20,12 @@ const episodeSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-var exports = module.exports = mongoose.model('Episode', episodeSchema);
+var model = mongoose.model('Episode', episodeSchema);
 
 // Add episode to DB only if does not exist in the DB yet
 // TODO: callbacks
-exports.addIfNotExists = function(episode) {
-    exports.update(
+model.addIfNotExists = function(episode) {
+    model.update(
         { total: episode.total },
         { $setOnInsert: episode },
         { upsert: true },
@@ -42,8 +42,8 @@ exports.addIfNotExists = function(episode) {
 // Call function for each episode in DB
 //  callback: function(episode)
 //  onErr:    function(err)
-exports.forEach = function(callback, onErr) {
-    exports.find({}, function(err, episodes) {
+model.forEach = function(callback, onErr) {
+    model.find({}, function(err, episodes) {
         if (err !== null) {
             if (!!onErr) {
                 onErr(err);
@@ -53,3 +53,6 @@ exports.forEach = function(callback, onErr) {
         episodes.forEach(callback);
     });
 };
+
+module.exports = model;
+
