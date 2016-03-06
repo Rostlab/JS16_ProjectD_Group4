@@ -1,0 +1,77 @@
+/*
+            Missing features:
+            * Liquid Layout        
+*/
+
+body {
+    width: 960px;
+    height: 560px;
+}
+#app {
+    width: 800px;
+    height: 560px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: black;
+}
+#searchBar {
+    margin: 10px;
+    padding: 10px;
+    width: 600px;
+}
+#submitButton {
+    margin-right: 10px;
+    width: 165px;
+    padding: 10px;
+}
+#canvas,
+#nocanvas {
+    background-color: white;
+    margin: 0px 10px 10px 10px;
+    border-width: 3px;
+    border-style: ridge;
+    border-color: black;
+    padding: 5px;
+    /* width: 780px;
+    height: 300px; 
+    Has to be specified in html document to prevent blurryness
+    Use Javascript??
+    */
+}
+#data,
+#trend {
+    display: inline-block;
+    margin-right: 5px;
+    width: 15px;
+    height: 15px;
+}
+#data {
+    background-color: blue;
+}
+#trend {
+    background-color: lightskyblue;
+}
+#legend {
+    float: left;
+}
+#dateRange {
+    float: right;
+    margin: 0px 10px 10px 10px;
+}
+#statsContainer {
+    margin: 0px 10px 10px 10px;
+    width: 780px;
+    overflow: scroll;
+}
+#stats {
+    width: 760px;
+    height: 100px;
+    resize: none;
+}
+#legend {
+    margin: 0px 10px 10px 10px;
+}
+
+/*canvas {
+    position: fixed;
+}*/
