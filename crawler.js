@@ -23,14 +23,14 @@ db.once('open', function () {
 got.fetchCharacters(function(status, characters) {
     console.log("status", status);
 
-    for (var i = 0; i < characters.length; i++) {
+    characters.forEach(function(character) {
         // TODO: skip if created / updated date < last checked date
         Character.addIfNotExists({
             "_id":  character._id,
             "name": character.name,
             "slug": slug(character.name, {lower: true})
         });
-    };
+    });
 }, function(err) {
     console.log("Fetch Error:", err);
 });
