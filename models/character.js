@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const characterSchema = mongoose.Schema({
+    // character ID (from API)
+    _id: {type: String, required: true, unique: true},
+
     // character name
     name: {type: String, required: true},
 
@@ -21,4 +24,18 @@ const characterSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-module.exports = mongoose.model('Character', character);
+var exports = module.exports = mongoose.model('Character', characterSchema);
+
+// callback: function(character)
+// onErr:    function(err)
+exports.forEach = function(callback, onErr) {
+    exports.find({}, function(err, characters) {
+        if (err !== null) {
+            if (!!onErr) {
+                onErr(err);
+            }
+            return;
+        }
+        characters.forEach(callback);
+    });
+};
