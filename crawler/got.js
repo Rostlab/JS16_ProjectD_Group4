@@ -31,6 +31,13 @@ function apiGet(path, onSuccess, onErr) {
     req.end();
 }
 
+// Get all episodes as JSON
+//  onSuccess: function(status, episodes)
+//  onErr:     function(err)
+exports.fetchEpisodes = function(onSuccess, onErr) {
+    apiGet('episodes', onSuccess, onErr);
+};
+
 // Get all characaters as JSON
 //  onSuccess: function(status, characters)
 //  onErr:     function(err)

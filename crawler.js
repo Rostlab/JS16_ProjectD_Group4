@@ -18,6 +18,8 @@ db.once('open', function () {
     console.log('connected.');
 });
 
+// TODO: fetch and add episodes when the API is ready
+
 got.fetchCharacters(function(status, characters) {
     console.log("status", status);
 
