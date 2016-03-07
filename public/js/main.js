@@ -6,9 +6,15 @@ function characterChart(svg, dataURL) {
     var margin = {top: 20, right: 20, bottom: 50, left: 50};
 
     // calculate height and width from svg size
-    // TODO: resize
-    var height = parseInt(svg.style('height'),10) - margin.top  - margin.bottom,
-        width  = parseInt(svg.style('width'),10)  - margin.left - margin.right;
+    function getSize() {
+        var svgHeight = parseInt(svg.style('height'),10),
+            svgWidth  = parseInt(svg.style('width'),10);
+
+        return {
+            height: svgHeight - margin.top  - margin.bottom,
+            width:  svgWidth  - margin.left - margin.right
+        };
+    }
 
     // create group for chart within svg
     var chart = svg.append("g");
@@ -16,15 +22,23 @@ function characterChart(svg, dataURL) {
     // apply margin
     chart.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    // add area elements
+    var pos = chart.append("path").attr("class", "area pos"),
+        neg = chart.append("path").attr("class", "area neg");
+
+    // add axis label elements
+    var xLabel = chart.append("g").attr("class", "x axis"),
+        yLabel = chart.append("g").attr("class", "y axis");
+
+
     // define axis
-    var x = d3.time.scale().range([0, width]),
-        y = d3.scale.linear().range([height, 0]);
+    var x = d3.time.scale(),
+        y = d3.scale.linear();
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("left");
 
-    // format areas
     // positive area between x-axis at y=0 and max(y)
-    var areaPos = d3.svg.area().interpolate("monotone").x(function(d) {
+    var calcAreaPos = d3.svg.area().interpolate("monotone").x(function(d) {
         return x(d.date);
     }).y0(function(d) {
         return y(0);
@@ -32,7 +46,7 @@ function characterChart(svg, dataURL) {
         return y(d.pos);
     });
     // negative area between x-axis at y=0 and min(y)
-    var areaNeg = d3.svg.area().interpolate("monotone").x(function(d) {
+    var calcAreaNeg = d3.svg.area().interpolate("monotone").x(function(d) {
         return x(d.date);
     }).y0(function(d) {
         return y(d.neg);
@@ -67,16 +81,33 @@ function characterChart(svg, dataURL) {
             return d.pos;
         })]);
 
-        // add areas
-        chart.append("path").datum(data).attr("class", "area pos").attr("d", areaPos);
-        chart.append("path").datum(data).attr("class", "area neg").attr("d", areaNeg);
+        // set area data
+        pos.datum(data);
+        neg.datum(data);
 
-        // add x- and y-axis
-        chart.append("g").attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")").call(xAxis);
-        chart.append("g").attr("class", "y axis").call(yAxis);
+        render();
+    }
+
+    function render() {
+        var s = getSize();
+
+        // axis
+        x.range([0, s.width]);
+        y.range([s.height, 0]);
+
+        // areas
+        pos.attr("d", calcAreaPos);
+        neg.attr("d", calcAreaNeg);
+
+        // axis
+        xLabel.attr("transform", "translate(0," + s.height + ")").call(xAxis);
+        yLabel.call(yAxis);
     }
 
     // request csv data and fill chart
     d3.csv(dataURL, convertCSV, fillChart);
+
+    this.resize = render;
+
+    return this;
 }

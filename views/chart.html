@@ -2,5 +2,6 @@
 <script src="/js/lib/d3.min.js"></script>
 <script src="/js/main.js"></script>
 <script>
-characterChart(d3.select("#chart"), "/donald-trump.csv");
+var chart = characterChart(d3.select("#chart"), "/donald-trump.csv");
+d3.select(window).on('resize', chart.resize);
 </script>
