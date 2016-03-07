@@ -1,0 +1,16 @@
+<script src="/js/d3.min.js"></script>
+<script>
+var dataURL = "/donald-trump.csv";
+
+var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+d3.csv(dataURL, function(d) {
+    return {
+        date: parseDate(d.date), // parse date column to Date
+        pos:  +d.pos,            // convert pos column to number
+        neg:  +d.neg             // convert neg column to number
+    };
+}, function(error, rows) {
+    console.log(rows);
+});
+</script>
