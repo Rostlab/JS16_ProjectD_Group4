@@ -14,6 +14,7 @@ var xAxis = d3.svg.axis().scale(x).orient("bottom"),
     yAxis = d3.svg.axis().scale(y).orient("left");
 
 // format areas
+// positive area between x-axis at y=0 and max(y)
 var areaPos = d3.svg.area().x(function(d) {
     return x(d.date);
 }).y0(function(d) {
@@ -21,6 +22,7 @@ var areaPos = d3.svg.area().x(function(d) {
 }).y1(function(d) {
     return y(d.pos);
 });
+// negative area between x-axis at y=0 and min(y)
 var areaNeg = d3.svg.area().x(function(d) {
     return x(d.date);
 }).y0(function(d) {
@@ -36,16 +38,19 @@ var svg = d3.select("body").append("svg")
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+// function to parse string in the format 2006-01-02 to JavaScript's Date type
 var parseDate = d3.time.format("%Y-%m-%d").parse;
 
 // request csv data and fill chart
 d3.csv(dataURL, function(d) {
+    // convert string data from CSV
     return {
         date: parseDate(d.date), // parse date column to Date
         pos:  +d.pos,            // convert pos column to positive number
         neg:  -d.neg             // convert neg column to negative number
     };
 }, function(error, data) {
+    // TODO: better error handling
     if (!!error) {
         var up = error;
         throw up;
@@ -55,6 +60,7 @@ d3.csv(dataURL, function(d) {
     x.domain(d3.extent(data, function(d) {
         return d.date;
     }));
+    // y from min(neg) to max(pos)
     y.domain([d3.min(data, function(d) {
         return d.neg;
     }), d3.max(data, function(d) {
