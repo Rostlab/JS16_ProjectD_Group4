@@ -29,7 +29,7 @@ function run(canvas, startDate, endDate, maxPopularity, dataset) {
     c.strokeStyle = "blue"; // TODO: Get color from HTML / CSS file (Legend)
     c.strokeLinecap = "round";
     c.lineJoin = "round";
-    if (dataset.length === 1) { // Special case. Looks super weird. Needs different visualization
+    if (dataset.length === 1) { // Special case. Looks super weird. Needs different visualization. NOT WORKING
         c.lineTo(canvas.width, Math.abs(dataset[i] - maxPopularity) * yUnitPx);
     } else {
         for (i = 1; i <= dateRange; i += 1) {

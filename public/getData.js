@@ -14,16 +14,6 @@ function maxPopularity() {
     return 10;
 }
 
-// Initializes the data
-/*(function () {
-    var i, c, d = new Date();
-    for (c in characters) {
-        for (i = Date(2016, 2, 1); i <= d; i = i + 1) {
-            data.push(c, i, (Math.random() - 0.5) * 2 * maxPopularity());
-        }
-    }
-}());*/
-
 // Checks whether a character exists in the db
 function exists(name) {
     var c;
