@@ -7,7 +7,8 @@ module.exports = function(grunt) {
         'Gruntfile.js',
         'crawler/*.js',
         'controllers/*.js',
-        'models/*.js'
+        'models/*.js',
+        'public/js/*.js'
       ],
       options: {
         curly: true,

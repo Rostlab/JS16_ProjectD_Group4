@@ -74,7 +74,7 @@ function characterChart(svg, dataURL) {
         // add x- and y-axis
         chart.append("g").attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")").call(xAxis);
-        chart.append("g").attr("class", "y axis").call(yAxis)
+        chart.append("g").attr("class", "y axis").call(yAxis);
     }
 
     // request csv data and fill chart
