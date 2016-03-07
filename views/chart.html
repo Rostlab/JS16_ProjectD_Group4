@@ -15,7 +15,7 @@ var xAxis = d3.svg.axis().scale(x).orient("bottom"),
 
 // format areas
 // positive area between x-axis at y=0 and max(y)
-var areaPos = d3.svg.area().x(function(d) {
+var areaPos = d3.svg.area().interpolate("monotone").x(function(d) {
     return x(d.date);
 }).y0(function(d) {
     return y(0);
@@ -23,7 +23,7 @@ var areaPos = d3.svg.area().x(function(d) {
     return y(d.pos);
 });
 // negative area between x-axis at y=0 and min(y)
-var areaNeg = d3.svg.area().x(function(d) {
+var areaNeg = d3.svg.area().interpolate("monotone").x(function(d) {
     return x(d.date);
 }).y0(function(d) {
     return y(d.neg);
