@@ -5,6 +5,9 @@ const cfg      = require('./core/config'),
       exphbs   = require('express-handlebars'),
       mongoose = require('mongoose');
 
+// load controllers
+const ctrData = require('./controllers/data');
+
 // connect to mongodb
 mongoose.connect(cfg.mongodb.uri);
 
@@ -16,6 +19,10 @@ app.set('view engine', '.html');
 // register routes
 app.get('/', function(req, res) {
     res.render("home");
+});
+app.use('/:slug.csv', ctrData);
+app.get('/:slug', function(req, res) {
+    res.render("chart");
 });
 
 // serve static content from /public dir
