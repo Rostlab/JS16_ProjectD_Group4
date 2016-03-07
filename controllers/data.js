@@ -18,7 +18,7 @@ module.exports = function(req, res) {
             Math.round(pos) + "," +
             Math.round(neg) + "\n"
         );
-    };
+    }
 
-    res.end()
+    res.end();
 };
