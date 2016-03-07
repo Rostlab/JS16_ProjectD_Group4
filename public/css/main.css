@@ -1,0 +1,20 @@
+.area {
+    clip-path: url(#clip);
+}
+.area.pos {
+    fill: #90BB5E;
+}
+.area.neg {
+    fill: #EF6944;
+}
+
+.axis {
+    font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
