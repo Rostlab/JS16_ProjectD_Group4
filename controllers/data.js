@@ -12,8 +12,8 @@ module.exports = function(req, res) {
 
     // for now just one month
     for (var i = 1; i <= 31; i++) {
-        var pos = (Math.sin(i/10)+1)*1337;
-        var neg = (Math.cos(i/10)+1)*1337;
+        var pos = (Math.sin(i/5)+1)*(0.5+Math.random()/2)*1337;
+        var neg = (Math.sin((i/5)+3)+1)*(0.5+Math.random()/2)*2000;
         res.write("2016-03-" + (i < 10 ? "0"+i : ""+i) + "," +
             Math.round(pos) + "," +
             Math.round(neg) + "\n"
