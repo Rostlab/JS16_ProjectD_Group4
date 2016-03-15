@@ -45,7 +45,7 @@ exports.fetchTweets = function(id, query, maxID, i) {
 
         if (typeof data.statuses !== "object" || data.statuses.length < 1) {
             console.log("No data!");
-            return;
+            return i;
         }
 
         for (var count = 0; count < data.statuses.length; count++) {
@@ -73,8 +73,9 @@ exports.fetchTweets = function(id, query, maxID, i) {
 
             //insert record
             document.save(function(err, data) {
-                if (err) console.log(err);
-                //else console.log('Saved : ', data);
+                if (err) {
+                    console.log(err);
+                }                //else console.log('Saved : ', data);
             });
         }
 
@@ -119,9 +120,11 @@ exports.streamTweets = function(query) {
 
             //insert record
             document1.save(function(err, data) {
-                if (err) console.log(err);
-                else console.log('Saved : ', data);
-            });
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log('Saved : ', data);
+                }            });
         });
 
         // Handle errors
