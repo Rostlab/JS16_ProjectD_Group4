@@ -1,19 +1,37 @@
-const cfg  = require('../core/config'),
-      twit = require('twitter');
+const    cfg = require('../core/config'),
+        twit = require('twitter'),
+    TweetSch = require('../models/tweet');
 
 var exports = module.exports = {};
+var retext  = require('retext');
+var inspect = require('unist-util-inspect');
+var sentiment = require('retext-sentiment');
+var sentimentScore;
+var queryStr;
 
 // init twitter API client
 const twitter = new twit(cfg.twitter);
 
+const express = require('express'),
+       exphbs = require('express-handlebars'),
+     mongoose = require('mongoose');
 
-var d = new Date();
-cald = d.setDate(d.getDate() - 4);
-var tillDate = d.getDate();
+// connect to mongodb
+mongoose.connect(cfg.mongodb.uri);
+var db = mongoose.connection;
+
+db.on('error', function(err) {
+    console.log('connection error', err);
+});
+db.once('open', function() {
+    console.log('connected.');
+});
 
 //Fetch the tweets using twitter api and display in console
-exports.fetchTweets = function(query, maxID, i) {
+exports.fetchTweets = function(id, query, maxID, i) {
     console.log('DEBUG:', 'twitter.fetchTweets', query, maxID, i);
+    queryStr = query;
+
     twitter.get('search/tweets', {
         q: query,
         include_entities: false,
@@ -30,56 +48,85 @@ exports.fetchTweets = function(query, maxID, i) {
             return;
         }
 
-        const oldestStatus = data.statuses[data.statuses.length-1];
+        for (var count = 0; count < data.statuses.length; count++) {
+
+            retext().use(sentiment).use(function() {
+                return function(cst) {
+                    sentimentScore = inspect(cst.data.polarity);
+                };
+            }).process(data.statuses[count].text);
+
+            var result;
+            //simple json record
+            var document = new TweetSch({
+                character: id,
+                name: query,
+                uid: data.statuses[count].id,
+                text: data.statuses[count].text,
+                lang: data.statuses[count].lang,
+                retweets: data.statuses[count].retweet_count,
+                favorite_count: data.statuses[count].favorite_count,
+                sentiment: sentimentScore,
+                created: data.statuses[count].created_at,
+                updated: Date.now()
+            });
+
+            //insert record
+            document.save(function(err, data) {
+                if (err) console.log(err);
+                //else console.log('Saved : ', data);
+            });
+        }
+
+        const oldestStatus = data.statuses[data.statuses.length - 1];
         const oldestID_str = oldestStatus.id_str;
         const oldestID = parseInt(oldestID_str);
-
         console.log(maxID, oldestID_str, oldestID, oldestStatus.created_at, '\n');
 
-        /*
-        data.statuses[0].created_at.split(' ').splice(1, 2).join(' ');
-        var split = data.statuses[0].created_at.split(' ');
-        var year = split[split.length - 1];
-        var date_calc = split[split.length - 4];
-        //console.log(date_calc);
-        //console.log(year, data.search_metadata.count);
-
-        try {
-            var_max_id = data.statuses[99].id;
-        } catch (err) {}
-        //console.log(" printing id :"+data.statuses[i].id);
-
-        for (var count = 0; count < data.search_metadata.count; count++) {
-            console.log(data.statuses[count].lang,
-                data.statuses[count].created_at,
-                data.statuses[count].id,
-                data.statuses[count].text,
-                data.statuses[count].retweet_count,
-                data.statuses[count].favorite_count);
-
-            //simple json record
-            var document = {
-                "lang": data.statuses[count].lang,
-                "created_at": data.statuses[count].created_at,
-                "id": data.statuses[count].id,
-                "text": data.statuses[count].text,
-                "retweet_count": data.statuses[count].retweet_count,
-                "favorite_count": data.statuses[count].favorite_count
-            };
-              //insert record
-                if (err) throw err;
-                db.collection('got_db').insert(document, function(err, records) {
-                console.log("Record added");
-              });
+        if (i > 1 && data.statuses.length !== 0) {
+            if (maxID !== oldestID) {
+                exports.fetchTweets(id, query, oldestID, i - 1);
+            } else {
+                console.log('No more data');
+                return;
+            }
         }
+    });
+};
 
-        console.log(date_calc, till_date);
-        if (date_calc == till_date) {} else {
-            fetchTweets(i + 1);
-        }*/
+exports.streamTweets = function(query) {
+    twitter.stream('statuses/filter', {
+        track: query
+    }, function(stream) {
+        stream.on('data', function(tweet) {
+            retext().use(sentiment).use(function() {
+                return function(cst) {
+                    sentimentScore = inspect(cst.data.polarity);
+                };
+            }).process(tweet.text);
 
-        if (i > 1) {
-            exports.fetchTweets(query, oldestID, i-1);
-        }
+            var document1 = new TweetSch({
+                character: query,
+                uid: tweet.id,
+                text: tweet.text,
+                lang: tweet.lang,
+                retweets: tweet.retweet_count,
+                favorite_count: tweet.favorite_count,
+                sentiment: sentimentScore,
+                created: tweet.created_at,
+                updated: Date.now()
+            });
+
+            //insert record
+            document1.save(function(err, data) {
+                if (err) console.log(err);
+                else console.log('Saved : ', data);
+            });
+        });
+
+        // Handle errors
+        stream.on('error', function(error) {
+            console.log(error);
+        });
     });
 };
