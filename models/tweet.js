@@ -6,11 +6,14 @@ const mongoose = require('mongoose');
 // => tweets inserted once for each character, maybe with different scoring
 
 const tweetSchema = mongoose.Schema({
-    // for which character?
+    // character id from character Schema
     character: {type: mongoose.Schema.Types.ObjectId, ref: 'Character'},
 
+    //character name: {type: String, required:true},
+    name:{type: String, required: true},
+
     // unique tweet ID (from twitter)
-    uid: {type: string, required: true},
+    uid: {type: String, required: true},
 
     // text
     text: {type: String, required: true},
@@ -20,6 +23,9 @@ const tweetSchema = mongoose.Schema({
 
     // retweet count
     retweets: {type: Number, default: 0},
+
+    // favorite_count
+    favorite_count: {type: Number,default: 0},
 
     // sentiment score for tweet's text
     sentiment: {type: Number, default: 0},

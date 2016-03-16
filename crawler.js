@@ -20,8 +20,25 @@ db.once('open', function () {
 
 // TODO: fetch and add episodes when the API is ready
 
+var i = 0;
+var countIter = 180;
 got.fetchCharacters(function(status, characters) {
     console.log("status", status);
+
+
+    function tweet_get(id, name, i) {
+        console.log('Current CHAR:' + characters[i].name);
+        countIter =  twitter.fetchTweets(id, name, null, countIter);
+
+        setTimeout(function() {
+            if (i < characters.length - 1) {
+                i++;
+                tweet_get(characters[i]._id, characters[i].name, i);
+            }
+        }, 900000);
+    };
+
+    tweet_get(characters[i]._id, characters[i].name, i);
 
     characters.forEach(function(character) {
         // TODO: skip if created / updated date < last checked date
