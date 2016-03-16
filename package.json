@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "grunt test",
-    "start": "node app.js"
+    "start": "node app.js",
+    "hookup": "touch .git/hooks/pre-commit && echo \"npm test\" > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
   },
   "repository": {
     "type": "git",
@@ -21,7 +22,7 @@
     "analysis"
   ],
   "author": "Santanu Mohanta, Marcus Novotny, Julien Schmidt",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/Rostlab/JS16_ProjectD_Group4/issues"
   },
