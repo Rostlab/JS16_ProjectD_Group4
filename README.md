@@ -21,6 +21,10 @@ Currently the package has two main files: `app.js` (web app) and `crawler.js` fo
 node app
 ```
 
+`/` Will provide an overview with the most popular characters
+`/character-name` shows the graph for a character
+`/character-name.csv` returns the raw data as CSV
+
 ### Crawler
 ```sh
 node crawler
