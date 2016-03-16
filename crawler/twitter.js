@@ -1,10 +1,10 @@
-const    cfg = require('../core/config'),
-        twit = require('twitter'),
-    TweetSch = require('../models/tweet');
+const    cfg  = require('../core/config'),
+        twit  = require('twitter'),
+    TweetSch  = require('../models/tweet');
 
-var exports = module.exports = {};
-var retext  = require('retext');
-var inspect = require('unist-util-inspect');
+var exports   = module.exports = {};
+var retext    = require('retext');
+var inspect   = require('unist-util-inspect');
 var sentiment = require('retext-sentiment');
 var sentimentScore;
 var queryStr;
@@ -26,6 +26,25 @@ db.on('error', function(err) {
 db.once('open', function() {
     console.log('connected.');
 });
+
+//Sentiment
+function findSentiment(tweet1) {
+    retext().use(sentiment).use(function() {
+        return function(cst) {
+            sentimentScore = inspect(cst.data.polarity);
+        };
+    }).process(tweet1);
+    return sentimentScore;
+}
+
+//Save Data
+function errCheck(err, data) {
+    if (err) {
+        console.log(err);
+    } else {
+        console.log('Saved : ', data);
+    }
+}
 
 //Fetch the tweets using twitter api and display in console
 exports.fetchTweets = function(id, query, maxID, i) {
@@ -49,19 +68,14 @@ exports.fetchTweets = function(id, query, maxID, i) {
         }
 
         for (var count = 0; count < data.statuses.length; count++) {
-
-            retext().use(sentiment).use(function() {
-                return function(cst) {
-                    sentimentScore = inspect(cst.data.polarity);
-                };
-            }).process(data.statuses[count].text);
+            sentimentScore = findSentiment(data.statuses[count].text);
 
             var result;
             //simple json record
             var document = new TweetSch({
                 character: id,
                 name: query,
-                uid: data.statuses[count].id,
+                uid : data.statuses[count].id,
                 text: data.statuses[count].text,
                 lang: data.statuses[count].lang,
                 retweets: data.statuses[count].retweet_count,
@@ -72,11 +86,7 @@ exports.fetchTweets = function(id, query, maxID, i) {
             });
 
             //insert record
-            document.save(function(err, data) {
-                if (err) {
-                    console.log(err);
-                }                //else console.log('Saved : ', data);
-            });
+            document.save(errCheck(err, data));
         }
 
         const oldestStatus = data.statuses[data.statuses.length - 1];
@@ -100,31 +110,22 @@ exports.streamTweets = function(query) {
         track: query
     }, function(stream) {
         stream.on('data', function(tweet) {
-            retext().use(sentiment).use(function() {
-                return function(cst) {
-                    sentimentScore = inspect(cst.data.polarity);
-                };
-            }).process(tweet.text);
+            sentimentScore1 = findSentiment(tweet.text);
 
             var document1 = new TweetSch({
                 character: query,
-                uid: tweet.id,
+                uid : tweet.id,
                 text: tweet.text,
                 lang: tweet.lang,
                 retweets: tweet.retweet_count,
                 favorite_count: tweet.favorite_count,
-                sentiment: sentimentScore,
+                sentiment: sentimentScore1,
                 created: tweet.created_at,
                 updated: Date.now()
             });
 
             //insert record
-            document1.save(function(err, data) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log('Saved : ', data);
-                }            });
+            document1.save(errCheck(err, data));
         });
 
         // Handle errors

@@ -1,12 +1,12 @@
 // TODO: merge this into app.js
 "use strict";
 
-const cfg = require('./core/config'),
-    twitter = require('./crawler/twitter'),
-    got = require('./crawler/got'),
+const cfg     = require('./core/config'),
+    twitter   = require('./crawler/twitter'),
+    got       = require('./crawler/got'),
     Character = require('./models/character'),
-    mongoose = require('mongoose'),
-    slug = require('slug');
+    mongoose  = require('mongoose'),
+    slug      = require('slug');
 
 // connect to mongodb
 mongoose.connect(cfg.mongodb.uri);
@@ -31,8 +31,6 @@ got.fetchCharacters(function(status, characters) {
         countIter =  twitter.fetchTweets(id, name, null, countIter);
 
         setTimeout(function() {
-//            twitter.fetchTweets(id, name, null, 180);
-
             if (i < characters.length - 1) {
                 i++;
                 tweet_get(characters[i]._id, characters[i].name, i);
