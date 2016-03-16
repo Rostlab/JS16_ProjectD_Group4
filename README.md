@@ -1,2 +1,49 @@
-# JS16_ProjectD_Group4
-Joffrey Baratheon is one of the most loathed characters in TV history. As a matter of fact people were celebrating his TV death on Twitter. We are interested to learn more on how people feel about different characters by analyzing tweets mentioning GoT characters. In this project you will be analyzing Twitter feeds across a timeline, you will look for the name of GoT characters in that feed and try to identify whether the tweet is positive or negative. You can then generate a metric that evaluates what is the accumulated sentiment expressed on Twitter for that given character at a given point in time, and what is the trend (positive, negative). It will be interesting to intersect the sentiments for characters following the airing of a certain episode (you can easily get the airing date for an episode from the database constructed in Project A).
+# GoT Twitter Sentiment Analysis
+
+## Installing
+Dendencies:
+- recent node.js + npm
+- MongoDB
+
+Install npm dependencies:
+```sh
+npm install grunt-cli -g
+npm install
+```
+
+Afterwards adjust `config.json`. You need to need to [create a Twitter API key](https://apps.twitter.com/) for the crawler.
+
+## Run
+Currently the package has two main files: `app.js` (web app) and `crawler.js` for the crawler.
+
+### WebApp
+```sh
+node app
+```
+
+`/` Will provide an overview with the most popular characters
+
+`/character-name` shows the graph for a character
+
+`/character-name.csv` returns the raw data as CSV
+
+### Crawler
+```sh
+node crawler
+```
+
+You can set the tasks that the crawler runs in `crawler.js`.
+
+## Testing
+```sh
+npm test
+```
+
+### Hook up npm and git
+To run `npm test` automatically before every git commit, install a git pre-commit hook:
+
+```sh
+npm run hookup
+```
+
+git aborts the commit if the tests fail. You can (but shouldn't) bypass it with `git commit --no-verify ...`.
