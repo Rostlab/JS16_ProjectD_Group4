@@ -1,7 +1,11 @@
 # GoT Twitter Sentiment Analysis
 
 ## Installing
+Dendencies:
+- recent node.js + npm
+- MongoDB
 
+Install npm dependencies:
 ```sh
 npm install grunt-cli -g
 npm install
