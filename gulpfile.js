@@ -12,6 +12,19 @@ var jshintConfig = {
     node: true
 };
 
+var jasmineOpts = {};
+jasmineOpts.config = {
+    "spec_dir": "spec",
+    "spec_files": [
+        "**/*[sS]pec.js"
+    ],
+    "helpers": [
+        "helpers/**/*.js"
+    ],
+    "stopSpecOnExpectationFailure": false,
+    "random": false
+};
+
 gulp.task("default", ["watch"]);
 
 gulp.task("lint", function() {
@@ -27,7 +40,7 @@ gulp.task("watch", function() {
 
 gulp.task("test", ["lint"], function() {
     return gulp.src("./spec/*.js")
-        .pipe(jasmine());
+        .pipe(jasmine(jasmineOpts));
 });
 
 gulp.task('hook', function() {

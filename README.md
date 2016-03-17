@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4.svg?branch=master)](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4)
+[![Build Status](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4.svg?branch=develop)](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4)
 # GoT Twitter Sentiment Analysis
 
 ## Installing
@@ -37,14 +37,14 @@ You can set the tasks that the crawler runs in `crawler.js`.
 
 ## Testing
 ```sh
-gulp test
+npm test
 ```
 
 ### Hook up npm and git
-To run `gulp lint` automatically before every git commit, install a git pre-commit hook:
+To run `npm test` automatically before every git commit, install a git pre-commit hook:
 
 ```sh
-gulp hook
+npm hookup
 ```
 
 git aborts the commit if the tests fail. You can (but shouldn't) bypass it with `git commit --no-verify ...`.

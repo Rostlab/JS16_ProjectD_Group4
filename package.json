@@ -4,6 +4,8 @@
     "description": "GoT Twitter Sentiment Analysis",
     "main": "app.js",
     "scripts": {
+        "test": "gulp test",
+        "hookup": "gulp hook",
         "start": "node app.js"
     },
     "repository": {
