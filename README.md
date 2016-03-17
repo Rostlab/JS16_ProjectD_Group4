@@ -11,7 +11,7 @@ npm install grunt-cli -g
 npm install
 ```
 
-Afterwards adjust `config.json`. You need to need to [create a Twitter API key](https://apps.twitter.com/) for the crawler.
+Afterwards adjust `config.json`. You need to [create a Twitter API key](https://apps.twitter.com/) for the crawler.
 
 ## Run
 Currently the package has two main files: `app.js` (web app) and `crawler.js` for the crawler.
