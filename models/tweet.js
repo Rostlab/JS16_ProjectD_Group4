@@ -24,8 +24,8 @@ const tweetSchema = mongoose.Schema({
     // retweet count
     retweets: {type: Number, default: 0},
 
-    // favorite_count
-    favorite_count: {type: Number,default: 0},
+    // favorite count
+    favorites: {type: Number,default: 0},
 
     // sentiment score for tweet's text
     sentiment: {type: Number, default: 0},
