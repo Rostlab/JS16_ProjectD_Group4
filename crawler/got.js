@@ -19,7 +19,14 @@ function apiGet(path, onSuccess, onErr) {
         });
 
         res.on('end', function() {
-            onSuccess(res.statusCode, JSON.parse(data));
+            if (res.statusCode === 200) {
+                onSuccess(JSON.parse(data));
+            } else {
+                onErr({
+                    status: statusCode,
+                    data:   data
+                });
+            }
         });
     });
 
