@@ -48,4 +48,9 @@ model.forEach = function(callback) {
     });
 };
 
+// Returns a Promise for an array of all characters in DB
+model.list = function() {
+    return model.find({}).exec();
+};
+
 module.exports = model;
