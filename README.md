@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4.svg?branch=develop)](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4)
 # GoT Twitter Sentiment Analysis
 
 ## Installing
@@ -7,7 +8,7 @@ Dendencies:
 
 Install npm dependencies:
 ```sh
-npm install grunt-cli -g
+npm install -g gulp
 npm install
 ```
 
@@ -43,7 +44,7 @@ npm test
 To run `npm test` automatically before every git commit, install a git pre-commit hook:
 
 ```sh
-npm run hookup
+npm hookup
 ```
 
 git aborts the commit if the tests fail. You can (but shouldn't) bypass it with `git commit --no-verify ...`.

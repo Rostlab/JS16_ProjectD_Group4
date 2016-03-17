@@ -1,42 +1,48 @@
 {
-  "name": "got-sentiment",
-  "version": "0.0.1",
-  "description": "GoT Twitter Sentiment Analysis",
-  "main": "app.js",
-  "scripts": {
-    "test": "grunt test",
-    "start": "node app.js",
-    "hookup": "touch .git/hooks/pre-commit && echo \"npm test\" > .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Rostlab/JS16_ProjectD_Group4.git"
-  },
-  "keywords": [
-    "got",
-    "sentiment",
-    "twitter",
-    "game",
-    "of",
-    "thrones",
-    "analysis"
-  ],
-  "author": "Santanu Mohanta, Marcus Novotny, Julien Schmidt",
-  "license": "GPL-3.0",
-  "bugs": {
-    "url": "https://github.com/Rostlab/JS16_ProjectD_Group4/issues"
-  },
-  "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
-  "dependencies": {
-    "Sentimental": "^1.0.1",
-    "express": "^4.13.4",
-    "express-handlebars": "^3.0.0",
-    "mongoose": "^4.4.6",
-    "slug": "^0.9.1",
-    "twitter": "^1.2.5"
-  },
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-jshint": "^1.0.0"
-  }
+    "name": "got-sentiment",
+    "version": "0.0.1",
+    "description": "GoT Twitter Sentiment Analysis",
+    "main": "app.js",
+    "scripts": {
+        "test": "gulp test",
+        "hookup": "gulp hook",
+        "start": "node app.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Rostlab/JS16_ProjectD_Group4.git"
+    },
+    "keywords": [
+        "got",
+        "sentiment",
+        "twitter",
+        "game",
+        "of",
+        "thrones",
+        "analysis"
+    ],
+    "author": "Santanu Mohanta, Marcus Novotny, Julien Schmidt",
+    "license": "GPL-3.0",
+    "bugs": {
+        "url": "https://github.com/Rostlab/JS16_ProjectD_Group4/issues"
+    },
+    "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
+    "dependencies": {
+        "Sentimental": "^1.0.1",
+        "express": "^4.13.4",
+        "express-handlebars": "^3.0.0",
+        "mongoose": "^4.4.6",
+        "slug": "^0.9.1",
+        "twitter": "^1.2.5"
+    },
+    "devDependencies": {
+        "gulp": "^3.9.1",
+        "gulp-cached": "^1.1.0",
+        "gulp-jasmine": "^2.3.0",
+        "gulp-jshint": "^2.0.0",
+        "gulp-symlink": "^2.1.4",
+        "jasmine": "^2.4.1",
+        "jshint": "^2.9.1",
+        "jshint-stylish": "^2.1.0"
+    }
 }
