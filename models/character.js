@@ -29,17 +29,10 @@ var model = mongoose.model('Character', characterSchema);
 // Add character to DB only if does not exist in the DB yet
 // TODO: callbacks
 model.addIfNotExists = function(character) {
-    model.update(
+    return model.update(
         { _id: character._id },
         { $setOnInsert: character },
-        { upsert: true },
-        function(err, res) {
-            if (err != null) {
-                console.log("DEBUG: update character", character.name, "FAILED:", err);
-            } else {
-                console.log("DEBUG: update character", character.name, res);
-            }
-        }
+        { upsert: true }
     );
 };
 

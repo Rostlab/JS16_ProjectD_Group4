@@ -46,6 +46,10 @@ got.fetchCharacters(function(status, characters) {
             "_id":  character._id,
             "name": character.name,
             "slug": slug(character.name, {lower: true})
+        }).then(function(res) {
+            console.log("DEBUG: update character", character.name, res);
+        }).catch(function(err) {
+            console.log("DEBUG: update character", character.name, "FAILED:", err);
         });
     });
 }, function(err) {
