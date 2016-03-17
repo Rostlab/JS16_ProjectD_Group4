@@ -37,4 +37,16 @@ const tweetSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-module.exports = mongoose.model('Tweet', tweetSchema);
+var model = mongoose.model('Tweet', tweetSchema);
+
+// Add tweet to DB only if does not exist in the DB yet
+// Returns a Promise
+model.addIfNotExists = function(tweet) {
+    return model.update(
+        { uid: tweet.uid },
+        { $setOnInsert: tweet },
+        { upsert: true }
+    );
+};
+
+module.exports = model;
