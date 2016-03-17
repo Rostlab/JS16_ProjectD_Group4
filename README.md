@@ -1,7 +1,7 @@
 # GoT Twitter Sentiment Analysis
 
 ## Installing
-Dendencies:
+Dependencies:
 - recent node.js + npm
 - MongoDB
 
