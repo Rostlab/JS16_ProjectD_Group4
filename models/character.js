@@ -38,16 +38,13 @@ model.addIfNotExists = function(character) {
 
 // Call function for each character in DB
 //  callback: function(character)
-//  onErr:    function(err)
-model.forEach = function(callback, onErr) {
-    model.find({}, function(err, characters) {
-        if (err !== null) {
-            if (!!onErr) {
-                onErr(err);
-            }
-            return;
-        }
-        characters.forEach(callback);
+// Returns a Promise
+model.forEach = function(callback) {
+    return new Promise(function(resolve, reject) {
+        model.find({}).exec().then(function(characters) {
+            var ps = characters.map(callback);
+            Promise.all(ps).then(resolve, reject);
+        }, reject);
     });
 };
 

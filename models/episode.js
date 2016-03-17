@@ -23,19 +23,12 @@ const episodeSchema = mongoose.Schema({
 var model = mongoose.model('Episode', episodeSchema);
 
 // Add episode to DB only if does not exist in the DB yet
-// TODO: callbacks
+// Returns a Promise
 model.addIfNotExists = function(episode) {
-    model.update(
+    return model.update(
         { total: episode.total },
         { $setOnInsert: episode },
-        { upsert: true },
-        function(err, res) {
-            if (err != null) {
-                console.log("DEBUG: update episode", episode.total, "FAILED:", err);
-            } else {
-                console.log("DEBUG: update episode", episode.total, res);
-            }
-        }
+        { upsert: true }
     );
 };
 
