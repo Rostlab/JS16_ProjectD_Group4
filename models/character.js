@@ -27,7 +27,7 @@ const characterSchema = mongoose.Schema({
 var model = mongoose.model('Character', characterSchema);
 
 // Add character to DB only if does not exist in the DB yet
-// TODO: callbacks
+// Returns a Promise
 model.addIfNotExists = function(character) {
     return model.update(
         { _id: character._id },
