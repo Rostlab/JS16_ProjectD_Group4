@@ -32,20 +32,32 @@ function get(url) {
     });
 }
 
+function matchIDs(str) {
+    const re = /<div class="tweet-text" data-id="([0-9]+)">/g;
+
+    var ids = [];
+    var match;
+    while (match = re.exec(str)) {
+        ids.push(match[1]);
+    }
+    return ids;
+};
+
 // Returns a Promise (resolved with JSON)
 exports.crawl = function(character) {
-    var url = 'https://mobile.twitter.com/search?q=' +
+    const searchURL = 'https://mobile.twitter.com/search?q=';
+    var url = searchURL +
             character.name.split(' ').join('+') +
             '&s=typd&x=13&y=16';
 
     (function loop(url, i) {
         get(url).then(function(res) {
             i++;
-            var ex = res.match(/search\?q=(.+)"> Load older Tweets/);
-            if (ex.length >= 2) {
-                console.log(i)
-                var url = 'https://mobile.twitter.com/search?q=' + ex[1];
-                loop(url, i);
+            var next = res.match(/search\?q=(.+)"> Load older Tweets/);
+            if (next.length >= 2) {
+                console.log(i, matchIDs(res));
+
+                loop(searchURL + next[1], i);
             } else {
                 console.log("OOOOOPS!!", i, res)
             }
