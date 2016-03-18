@@ -23,7 +23,7 @@ function apiGet(path) {
                     resolve(JSON.parse(data));
                 } else {
                     reject({
-                        status: statusCode,
+                        status: res.statusCode,
                         data:   data
                     });
                 }
