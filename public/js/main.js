@@ -154,8 +154,9 @@ function characterChart(svg, dataURL) {
 
     function render() {
         // axis (not needed for zoom handling)
-        x.range([0, getSize().width]);
-        y.range([getSize().height, 0]);
+        var s = getSize();
+        x.range([0, s.width]);
+        y.range([s.height, 0]);
 
         recalc();
     }
