@@ -1,14 +1,14 @@
 language: node_js
 node_js:
-- '5.7'
-- stable
+  - "5.7"
+  - "stable"
 before_script:
-- npm install -g gulp
+  - npm install -g gulp
 deploy:
-  on:
-      tags: true
-      branch: master
-  provider: npm
-  email: salahov.cavid@gmail.com
-  api_key:
-    secure: iXfOg3dmotixxi/K1SfjuMG+OCxZpIqFnsZ7jBBmYFTBeCm/crDV+flCBP09IA+1LQFTv8Iffj/VKqK3RpMppmcif6fJHDwb/Wp73onUrLikvowmtFoRknE/cdF0XDbfsT1QUkrxJ6DQcYr0ZUQyHzSSS0v2RLguMtff+Kv4AkeSbwBM/EV0oTp0G1pikaS3TIAp3ixWjg6xQNZ5lkloE2eIs2KyNQid0kACsLSaTL4zvj3BjVFsrdBhQp5f9nC+DPJw5KA08XL9tpl2vsetvBNmxKm+6kV51RjGTDQa8dejinD7F/37cFPYhAwGCiDNn8xhEhDXhUA5zoMbgc8P1X4Bd+4nsp6V+5W8p/M4c6nh7VenlAdTQZbZ1DXC+pVtVu4R3i5X4j8dir/AsCRzysXyA126bXfoUtPOX1eX4i07ZPR1u6lDqjMFIwTBULBJR6luewBaYZgr5g/3ZJNovbBrZ+5I37K2UP2CKRMK4/GXMCiuNShapIdSgxgcXZjFl2z6nbt9Tfb26MvdprkLy0jZv9hZNkiLGK1yCPGs+NhwiuZ12HCBXCOvZjpQMe2lLn0Ort13ltgqb93CybxneGdiZvWt3lhCu1G5vIOVZ72yjieltj9ESWG8+uxGZs7fNrA3eJoTOqnEkAtHDHSsAUrpUIcnROrIbxPccwG8ta8=
+    provider: npm
+    email: salahov.cavid@gmail.com
+    api_key:
+        secure: Hy3lpeAuZ+ozJS2/a6qHNGVsjC/m7Cs+ItM/Y/fB11357WKifujZEeJOk5ck6uhWCvctAi36oGciwvI7RXLejkgCEEru7ArNxOk5Q9ukSFCyabjrZg5A31YcuHwppiIoCD4c/6AnSBR76/bTMJuzyZqUN9Dx8qtxGNTYFGdKYBizdW7RJjCD86TUFk6XmjEFRuvh5LeFQCjWa9GYcTax2GCJSR0tI4QvbrBlK0Rskbz/PsPvbw9taV3fZw4UfSSMwiWiF+ti+1Hbb4BArLRZ+WtBURM/TOZjez7vnIPpw20wa+PC+Jbje8uRaykOnEFecwZnTrTdeXWtat3TxDe2cUG5mPTMbsQhZSbDkHREXX6x4/EI1fq7NQHeFFTUgU3rn0UP/rp+Z78FPyk4aSBp75UnobQ78M/CpN9HnZNyxr/KjlHH5aXpm/aNN2Y6VnpXQ8bVNkZM5z98ZPGOsOtLSSn/ZE4PNV6Uu0Gh5eDYSJmjlVMkmuRWbrVpDw2k20NOiF4wDEnG4SHANsfDsbv2hFWgKdD6bWOk0sWKXTbqllgnlIhtpRj14LEil962+V9+3wdL4d/ZJd/gN7HHJnX5M4OVkDA6Gc1vI/wR6bsgLm0X3LwlqJFcnw/cq5s2TA8qTRRnicRN2CT2vd+X5Hdi156zYwUVSYhfogt55Fog71E=
+    on:
+        tags: true
+        branch: master
