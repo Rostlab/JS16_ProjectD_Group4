@@ -1,5 +1,5 @@
 {
-    "name": "got-sentiment",
+    "name": "gotsentimental",
     "version": "0.0.1",
     "description": "GoT Twitter Sentiment Analysis",
     "main": "app.js",
