@@ -25,17 +25,14 @@ jasmineOpts.config = {
     "random": false
 };
 
-gulp.task("default", ["watch"]);
-
 gulp.task("lint", function() {
     return gulp.src("./*.js")
         .pipe(cache("linting"))
         .pipe(jshint(jshintConfig))
-        .pipe(jshint.reporter("jshint-stylish"));
-});
-
-gulp.task("watch", function() {
-    gulp.watch("./*js", ["lint"]);
+        .pipe(jshint.reporter("jshint-stylish"))
+        .pipe(jshint.reporter("fail", {
+            ignoreWarnings: false
+        }));
 });
 
 gulp.task("test", ["lint"], function() {
