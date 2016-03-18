@@ -4,43 +4,48 @@ const cfg = require('../core/config'),
 var exports = module.exports = {};
 
 // Make an API GET request and return response as JSON
-//  onSuccess: function(status, jsonResponse)
-//  onErr:     function(err)
+// Returns a Promise (resolved with JSON)
 function apiGet(path, onSuccess, onErr) {
-    var req = https.request({
-        host: cfg.api.host,
-        path: cfg.api.prefix + path,
-        method: 'GET'
-    }, function(res) {
-        var data = '';
+    return new Promise(function(resolve, reject) {
+        var req = https.request({
+            hostname: cfg.api.host,
+            path:     cfg.api.prefix + path,
+            method:  'GET'
+        }, function(res) {
+            var data = '';
 
-        res.on('data', function(chunk) {
-            data += chunk;
+            res.on('data', function(chunk) {
+                data += chunk;
+            });
+
+            res.on('end', function() {
+                if (res.statusCode === 200) {
+                    resolve(JSON.parse(data));
+                } else {
+                    reject({
+                        status: statusCode,
+                        data:   data
+                    });
+                }
+            });
         });
 
-        res.on('end', function() {
-            onSuccess(res.statusCode, JSON.parse(data));
+        req.on('error', function(err) {
+            reject(err);
         });
+
+        req.end();
     });
-
-    // add onErr callback, if exists
-    if (!!onErr) {
-        req.on('error', onErr);
-    }
-
-    req.end();
 }
 
 // Get all episodes as JSON
-//  onSuccess: function(status, episodes)
-//  onErr:     function(err)
+// Returns a Promise (resolved with JSON)
 exports.fetchEpisodes = function(onSuccess, onErr) {
-    apiGet('episodes', onSuccess, onErr);
+    return apiGet('episodes', onSuccess, onErr);
 };
 
 // Get all characaters as JSON
-//  onSuccess: function(status, characters)
-//  onErr:     function(err)
+// Returns a Promise (resolved with JSON)
 exports.fetchCharacters = function(onSuccess, onErr) {
-    apiGet('characters', onSuccess, onErr);
+    return apiGet('characters', onSuccess, onErr);
 };

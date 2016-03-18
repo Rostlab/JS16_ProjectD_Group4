@@ -24,8 +24,8 @@ const tweetSchema = mongoose.Schema({
     // retweet count
     retweets: {type: Number, default: 0},
 
-    // favorite_count
-    favorite_count: {type: Number,default: 0},
+    // favorite count
+    favorites: {type: Number,default: 0},
 
     // sentiment score for tweet's text
     sentiment: {type: Number, default: 0},
@@ -37,4 +37,16 @@ const tweetSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-module.exports = mongoose.model('Tweet', tweetSchema);
+var model = mongoose.model('Tweet', tweetSchema);
+
+// Add tweet to DB only if does not exist in the DB yet
+// Returns a Promise
+model.addIfNotExists = function(tweet) {
+    return model.update(
+        { uid: tweet.uid },
+        { $setOnInsert: tweet },
+        { upsert: true }
+    );
+};
+
+module.exports = model;

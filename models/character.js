@@ -27,35 +27,30 @@ const characterSchema = mongoose.Schema({
 var model = mongoose.model('Character', characterSchema);
 
 // Add character to DB only if does not exist in the DB yet
-// TODO: callbacks
+// Returns a Promise
 model.addIfNotExists = function(character) {
-    model.update(
+    return model.update(
         { _id: character._id },
         { $setOnInsert: character },
-        { upsert: true },
-        function(err, res) {
-            if (err != null) {
-                console.log("DEBUG: update character", character.name, "FAILED:", err);
-            } else {
-                console.log("DEBUG: update character", character.name, res);
-            }
-        }
+        { upsert: true }
     );
 };
 
 // Call function for each character in DB
 //  callback: function(character)
-//  onErr:    function(err)
-model.forEach = function(callback, onErr) {
-    model.find({}, function(err, characters) {
-        if (err !== null) {
-            if (!!onErr) {
-                onErr(err);
-            }
-            return;
-        }
-        characters.forEach(callback);
+// Returns a Promise
+model.forEach = function(callback) {
+    return new Promise(function(resolve, reject) {
+        model.find({}).exec().then(function(characters) {
+            var ps = characters.map(callback);
+            Promise.all(ps).then(resolve, reject);
+        }, reject);
     });
+};
+
+// Returns a Promise for an array of all characters in DB
+model.list = function() {
+    return model.find({}).exec();
 };
 
 module.exports = model;
