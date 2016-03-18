@@ -7,14 +7,17 @@
 .area.neg {
     fill: #EF6944;
 }
-
 .axis {
     font: 10px sans-serif;
 }
-
 .axis path,
 .axis line {
     fill: none;
     stroke: #000;
     shape-rendering: crispEdges;
+    "vector-effect": non-scaling-stroke;
+}
+.react {
+    cursor: move;
+    pointer-events: all;
 }
