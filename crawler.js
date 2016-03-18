@@ -38,20 +38,23 @@ function updateCharacters() {
     });
 }
 
-function crawlTweets(character) {
+// 2nd param (optional): Full crawl or just update?
+function crawlTweets(character, full) {
     return new Promise(function(resolve, reject) {
         var maxID    = null,
+            inserted = null,
             found    = null,
             totalIns = 0,
             totalFnd = 0;
         (function loop() {
             twitter.fetchTweets(character.id, character.name, maxID).then(function(res) {
-                maxID = res.maxID;
-                found = res.found;
-                totalFnd += res.found;
-                totalIns += res.inserted;
+                maxID     = res.maxID;
+                found     = res.found;
+                inserted  = res.inserted;
+                totalFnd += found;
+                totalIns += inserted;
 
-                if (found >= 99 && totalFnd < 1000) { // TODO: remove totalFnd limit
+                if (((!full && inserted > 0) || (!!full && found >= 99)) && totalFnd < 1000) { // TODO: remove totalFnd limit
                     loop();
                 } else {
                     resolve({found: totalFnd, inserted: totalIns, maxID: maxID});
