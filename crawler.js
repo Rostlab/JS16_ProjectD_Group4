@@ -58,7 +58,7 @@ function crawlTweets(character) {
             }, function(err) {
                 // check if it was because of rate-limiting
                 // if yes, wait for time stated in header
-                if(!!err && !!err.headers && err.err.length == 1 &&
+                if(!!err && !!err.headers && err.err.length === 1 &&
                    (err.err[0].code === twitter.codeRateLimited)) {
 
                     var reset = err.headers['x-rate-limit-reset'];
@@ -106,8 +106,6 @@ updateCharacters().then(function() {
                     }
                 }, function(err) {
                     console.log("FAILED CRWL", characters[i].name, err);
-                    found    += res.found;
-                    inserted += res.inserted;
                     if (++i < characters.length) {
                         iterCrawl(i);
                     } else {
@@ -119,7 +117,7 @@ updateCharacters().then(function() {
     }).then(function(res) {
         console.log("FULL CRAWL: ", res);
         mongoose.disconnect();
-    }).catch(console.log)
+    }).catch(console.log);
 }, function(err) {
     console.log("ERROR while updating Characters: ", err);
     mongoose.disconnect();
