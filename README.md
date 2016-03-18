@@ -44,7 +44,7 @@ npm test
 To run `npm test` automatically before every git commit, install a git pre-commit hook:
 
 ```sh
-npm hookup
+npm run hookup
 ```
 
 git aborts the commit if the tests fail. You can (but shouldn't) bypass it with `git commit --no-verify ...`.
