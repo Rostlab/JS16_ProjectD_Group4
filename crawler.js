@@ -69,8 +69,8 @@ function crawlTweets(character) {
                         // Add 5 seconds extra because auf async clock etc
                         timeout += 5;
 
-                        console.log("TIMEOUT", reset, timeout);
-                        setTimeout(loop, timeout * 1000);
+                        console.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+                        setTimeout(loop, timeout*1000);
                     } else {
                         reject(err.err);
                     }
