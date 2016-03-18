@@ -2,6 +2,7 @@
 "use strict";
 
 const cfg       = require('./core/config'),
+      debug     = require('./core/debug')('crawler', true),
       twitter   = require('./crawler/twitter'),
       got       = require('./crawler/got'),
       Character = require('./models/character'),
@@ -12,10 +13,10 @@ const cfg       = require('./core/config'),
 mongoose.connect(cfg.mongodb.uri);
 var db = mongoose.connection;
 db.on('error', function (err) {
-    console.log('connection error', err);
+    debug.error('connection error', err);
 });
 db.once('open', function () {
-    console.log('connected.');
+    debug.info('connected.');
 });
 
 // TODO: fetch and add episodes when the API is ready
@@ -69,7 +70,7 @@ function crawlTweets(character) {
                         // Add 5 seconds extra because auf async clock etc
                         timeout += 5;
 
-                        console.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+                        debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
                         setTimeout(loop, timeout*1000);
                     } else {
                         reject(err.err);
@@ -85,7 +86,7 @@ function crawlTweets(character) {
 }
 
 updateCharacters().then(function() {
-    console.log("Characters updated");
+    debug.log("Characters updated");
 
     // Crawl Twitter for each Character in DB
     Character.list().then(function(characters) {
@@ -96,7 +97,7 @@ updateCharacters().then(function() {
 
             (function iterCrawl(i) {
                 crawlTweets(characters[i]).then(function(res) {
-                    console.log("CRWLD", characters[i].name, res);
+                    debug.log("CRWLD", characters[i].name, res);
                     found    += res.found;
                     inserted += res.inserted;
                     if (++i < characters.length) {
@@ -105,7 +106,7 @@ updateCharacters().then(function() {
                         resolve({found: found, inserted: inserted});
                     }
                 }, function(err) {
-                    console.log("FAILED CRWL", characters[i].name, err);
+                    debug.error("FAILED CRWL", characters[i].name, err);
                     if (++i < characters.length) {
                         iterCrawl(i);
                     } else {
@@ -115,10 +116,10 @@ updateCharacters().then(function() {
             })(0);
         });
     }).then(function(res) {
-        console.log("FULL CRAWL: ", res);
+        debug.log("FULL CRAWL: ", res);
         mongoose.disconnect();
     }).catch(console.log);
 }, function(err) {
-    console.log("ERROR while updating Characters: ", err);
+    debug.error("updating Characters: ", err);
     mongoose.disconnect();
 });
