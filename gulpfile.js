@@ -42,5 +42,5 @@ gulp.task("test", ["lint"], function() {
 
 gulp.task('hook', function() {
     return gulp.src(".pre-commit")
-        .pipe(symlink(".git/hooks/", "pre-commit"));
+        .pipe(symlink(".git/hooks/pre-commit"));
 });
