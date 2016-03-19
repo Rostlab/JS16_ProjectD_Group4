@@ -1,5 +1,6 @@
-const cfg = require('../core/config'),
-    https = require('https');
+const cfg   = require('../core/config'),
+      http  = require('http'),
+      https = require('https');
 
 var exports = module.exports = {};
 
@@ -7,7 +8,8 @@ var exports = module.exports = {};
 // Returns a Promise (resolved with JSON)
 function apiGet(path, onSuccess, onErr) {
     return new Promise(function(resolve, reject) {
-        var req = https.request({
+        var proto = (cfg.api.https) ? https : http;
+        var req = proto.request({
             hostname: cfg.api.host,
             path:     cfg.api.prefix + path,
             method:  'GET'

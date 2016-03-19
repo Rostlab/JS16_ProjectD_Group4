@@ -3,7 +3,7 @@ const fs = require('fs');
 // read config
 var cfg;
 try {
-    console.log("Parsing config...")
+    console.log("Parsing config...");
     cfg = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 } catch (e) {
     if (e.code === 'ENOENT') {

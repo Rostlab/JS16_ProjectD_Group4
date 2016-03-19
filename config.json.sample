@@ -4,6 +4,7 @@
         "uri": "mongodb://localhost/got-sentiment"
     },
     "api": {
+        "https": true,
         "host": "got-api.bruck.me",
         "prefix": "/api/"
     },
