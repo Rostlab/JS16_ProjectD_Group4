@@ -8,9 +8,9 @@ var exports   = module.exports = {};
 // init twitter API client
 const client = new twitter(cfg.twitter);
 
-function saveTweet(id, tweet) {
+exports.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
-        character: id,
+        character: characterID,
         uid:       tweet.id,
         text:      tweet.text,
         lang:      tweet.lang,
@@ -21,9 +21,30 @@ function saveTweet(id, tweet) {
     });
 }
 
+// Returns a Promise for an array of Tweets
+exports.getTweetsList = function(ids) {
+    if (Array.isArray(ids)) {
+        ids = ids.toString();
+    }
+
+    return new Promise(function(resolve, reject) {
+        client.get('statuses/lookup', {
+            id:               ids,
+            include_entities: false,
+            trim_user:        true
+        }, function(err, data, resp) {
+            if (err !== null) {
+                reject({err: err, headers: resp.headers});
+                return;
+            }
+            resolve(data);
+        });
+    });
+}
+
 exports.codeRateLimited = 88;
 
-exports.fetchTweets = function(id, query, maxID) {
+exports.fetchTweets = function(characterID, query, maxID) {
     //console.log('DEBUG:', 'twitter.fetchTweets', query, maxID);
     return new Promise(function(resolve, reject) {
         client.get('search/tweets', {
@@ -45,7 +66,7 @@ exports.fetchTweets = function(id, query, maxID) {
             }
 
             const ps = Promise.all(tweets.map(function(tweet) {
-                return saveTweet(id, tweet);
+                return exports.saveTweet(characterID, tweet);
             })).then(function(res) {
                 var found    = res.length,
                     inserted = 0;

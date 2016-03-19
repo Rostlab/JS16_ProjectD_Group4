@@ -1,5 +1,7 @@
-const cfg   = require('../core/config'),
-      https = require('https');
+const cfg     = require('../core/config'),
+      debug   = require('../core/debug')('crawler/mobile', true),
+      https   = require('https'),
+      twitter = require('../crawler/twitter');
 
 var exports = module.exports = {};
 
@@ -43,24 +45,41 @@ function matchIDs(str) {
     return ids;
 };
 
+function saveIDs(characterID, ids) {
+    twitter.getTweetsList(ids).then(function(tweets) {
+        const ps = Promise.all(tweets.map(function(tweet) {
+            return twitter.saveTweet(characterID, tweet);
+        })).then(function(res) {
+            var found    = res.length,
+                inserted = 0;
+            res.forEach(function(r) {
+                if(!!r.upserted) {
+                    inserted++;
+                }
+            });
+
+            debug.log(characterID, {found: found, inserted: inserted});
+        }, debug.error);
+    });
+}
+
 // Returns a Promise (resolved with JSON)
 exports.crawl = function(character) {
     const searchURL = 'https://mobile.twitter.com/search?q=';
-    var url = searchURL +
-            character.name.split(' ').join('+') +
-            '&s=typd&x=13&y=16';
+    var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
 
     (function loop(url, i) {
         get(url).then(function(res) {
-            i++;
             var next = res.match(/search\?q=(.+)"> Load older Tweets/);
-            if (next.length >= 2) {
-                console.log(i, matchIDs(res));
+            if (next) {
+                var ids = matchIDs(res);
+                saveIDs(character.id, ids);
 
-                loop(searchURL + next[1], i);
+                loop(searchURL + next[1], ++i);
             } else {
-                console.log("OOOOOPS!!", i, res)
+                debug.error("OOOOOPS!!", i, url);
+                debug.log(res);
             }
-        }, console.log);
+        }, debug.error);
     })(url, 0);
 };
