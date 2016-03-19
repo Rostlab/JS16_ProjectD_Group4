@@ -1,8 +1,9 @@
 #!/bin/sh
-
+PATH=$PATH:/usr/local/bin:/usr/local/sbin
 if git diff --cached --name-only --diff-filter=ACM | grep '.js$' >/dev/null 2>&1
 then
-  ./node_modules/.bin/gulp lint
+  npm test
 fi
 
 exit $?
+
