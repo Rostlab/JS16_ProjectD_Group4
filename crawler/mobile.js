@@ -45,41 +45,79 @@ function matchIDs(str) {
     return ids;
 };
 
-function saveIDs(characterID, ids) {
-    twitter.getTweetsList(ids).then(function(tweets) {
-        const ps = Promise.all(tweets.map(function(tweet) {
-            return twitter.saveTweet(characterID, tweet);
-        })).then(function(res) {
-            var found    = res.length,
-                inserted = 0;
-            res.forEach(function(r) {
-                if(!!r.upserted) {
-                    inserted++;
-                }
-            });
+function retryIfRateLimited(err, callback) {
+    // check if it was because of rate-limiting
+    // if yes, wait for time stated in header
+    if(!!err && !!err.headers && err.err.length === 1 &&
+       (err.err[0].code === twitter.codeRateLimited)) {
 
-            debug.log(characterID, {found: found, inserted: inserted});
-        }, debug.error);
+        var reset = err.headers['x-rate-limit-reset'];
+        if (!!reset) {
+            // determine wait time in seconds
+            var timeout = (reset - Math.floor(new Date() / 1000));
+
+            // Add 5 seconds extra because auf async clock etc
+            timeout += 5;
+
+            debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+            setTimeout(callback, timeout*1000);
+            return true
+        }
+        return false
+    }
+}
+
+function saveIDs(characterID, ids) {
+    return new Promise(function(resolve, reject) {
+        twitter.getTweetsList(ids).then(function(tweets) {
+             // currently DB stuff still async
+            resolve(true);
+
+            const ps = Promise.all(tweets.map(function(tweet) {
+                return twitter.saveTweet(characterID, tweet);
+            })).then(function(res) {
+                var found    = res.length,
+                    inserted = 0;
+                res.forEach(function(r) {
+                    if(!!r.upserted) {
+                        inserted++;
+                    }
+                });
+
+                debug.log(characterID, {found: found, inserted: inserted}, tweets[tweets.length-1].created_at);
+            }, debug.error);
+        }, function(err) {
+            function retry() {
+                saveIDs(characterID, ids).then(resolve, reject);
+            }
+            if (!retryIfRateLimited(err, retry)) {
+                // otherwise stuff went wrong
+                reject(err);
+            }
+        }).catch(reject);
     });
 }
 
 // Returns a Promise (resolved with JSON)
 exports.crawl = function(character) {
     const searchURL = 'https://mobile.twitter.com/search?q=';
+    const nextRe    = /search\?q=(.+)"> Load older Tweets/;
     var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
 
-    (function loop(url, i) {
+    (function loop(url) {
         get(url).then(function(res) {
-            var next = res.match(/search\?q=(.+)"> Load older Tweets/);
+            var next = res.match(nextRe);
             if (next) {
                 var ids = matchIDs(res);
-                saveIDs(character.id, ids);
-
-                loop(searchURL + next[1], ++i);
+                saveIDs(character.id, ids).then(function(res) {
+                    loop(searchURL + next[1]);
+                }, function(err) {
+                    debug.error("saveIDs.error", err);
+                });
             } else {
                 debug.error("OOOOOPS!!", i, url);
                 debug.log(res);
             }
         }, debug.error);
-    })(url, 0);
+    })(url);
 };
