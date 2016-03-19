@@ -39,32 +39,10 @@ function matchIDs(str) {
 
     var ids = [];
     var match;
-    while (match = re.exec(str)) {
+    while ((match = re.exec(str))) {
         ids.push(match[1]);
     }
     return ids;
-};
-
-function retryIfRateLimited(err, callback) {
-    // check if it was because of rate-limiting
-    // if yes, wait for time stated in header
-    if(!!err && !!err.headers && err.err.length === 1 &&
-       (err.err[0].code === twitter.codeRateLimited)) {
-
-        var reset = err.headers['x-rate-limit-reset'];
-        if (!!reset) {
-            // determine wait time in seconds
-            var timeout = (reset - Math.floor(new Date() / 1000));
-
-            // Add 5 seconds extra because auf async clock etc
-            timeout += 5;
-
-            debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
-            setTimeout(callback, timeout*1000);
-            return true
-        }
-        return false
-    }
 }
 
 function saveIDs(characterID, ids) {
@@ -90,7 +68,7 @@ function saveIDs(characterID, ids) {
             function retry() {
                 saveIDs(characterID, ids).then(resolve, reject);
             }
-            if (!retryIfRateLimited(err, retry)) {
+            if (!twitter.retryIfRateLimited(err, retry)) {
                 // otherwise stuff went wrong
                 reject(err);
             }

@@ -16,12 +16,12 @@ module.exports = function(prefix, enabled) {
     }
 
     function warn() {
-        var args = Array.prototype.slice.call(arguments)
+        var args = Array.prototype.slice.call(arguments);
         console.warn("["+prefix+"][WARN]", ...args);
     }
 
     function error() {
-        var args = Array.prototype.slice.call(arguments)
+        var args = Array.prototype.slice.call(arguments);
         console.error("["+prefix+"][ERROR]", ...args);
     }
 
@@ -36,7 +36,7 @@ module.exports = function(prefix, enabled) {
     logger.disable = function() {
         logger.log = logger.info = logger.warn = logger.error = logger.time =
             logger.timeEnd = logger.assert = logger.trace = discard;
-    }
+    };
 
     logger.enable = function() {
         logger.log     = log;
@@ -47,11 +47,11 @@ module.exports = function(prefix, enabled) {
         logger.timeEnd = timeEnd;
         logger.assert  = console.assert;
         logger.trace   = console.trace;
-    }
+    };
 
     if (enabled) {
         logger.enable();
     }
 
     return logger;
-}
+};
