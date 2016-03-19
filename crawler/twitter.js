@@ -1,12 +1,12 @@
 const cfg       = require('../core/config'),
       sentiment = require('../crawler/sentiment'),
-      twit      = require('twitter'),
+      twitter   = require('twitter'),
       Tweet     = require('../models/tweet');
 
 var exports   = module.exports = {};
 
 // init twitter API client
-const twitter = new twit(cfg.twitter);
+const client = new twitter(cfg.twitter);
 
 function saveTweet(id, tweet) {
     return Tweet.addIfNotExists({
@@ -26,7 +26,7 @@ exports.codeRateLimited = 88;
 exports.fetchTweets = function(id, query, maxID) {
     //console.log('DEBUG:', 'twitter.fetchTweets', query, maxID);
     return new Promise(function(resolve, reject) {
-        twitter.get('search/tweets', {
+        client.get('search/tweets', {
             q:                query,
             include_entities: false,
             count:            100,
@@ -68,7 +68,7 @@ exports.fetchTweets = function(id, query, maxID) {
 };
 
 exports.streamTweets = function(query) {
-    twitter.stream('statuses/filter', {
+    client.stream('statuses/filter', {
         track: query
     }, function(stream) {
         stream.on('data', saveTweet);
