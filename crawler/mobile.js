@@ -80,30 +80,42 @@ function saveIDs(characterID, ids) {
 exports.crawl = function(character) {
     const searchURL = 'https://mobile.twitter.com/search?q=';
     const nextRe    = /search\?q=(.+)"> Load older Tweets/;
+    const doneRe    = /<div class="noresults"> No results for/;
 
-    var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
-    var ids = [];
+    return new Promise(function(resolve, reject) {
+        var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
+        var ids = [];
+        var found = 0;
 
-    (function loop() {
-        get(url).then(function(res) {
-            var next = res.match(nextRe);
-            if (next) {
-                url = searchURL + next[1];
-                ids = ids.concat(matchIDs(res));
-                if (ids.length >= 100) {
-                    var save = ids.splice(0,100);
-                    saveIDs(character.id, save).then(function(res) {
+        (function loop() {
+            get(url).then(function(res) {
+                var next = res.match(nextRe);
+                if (next) {
+                    url = searchURL + next[1];
+                    ids = ids.concat(matchIDs(res));
+                    if (ids.length >= 100) {
+                        found += 100;
+                        var save = ids.splice(0,100);
+                        saveIDs(character.id, save).then(function(res) {
+                            loop();
+                        }, function(err) {
+                            debug.error("saveIDs.error", err);
+                        });
+                    } else {
                         loop();
+                    }
+                } else if (res.match(doneRe)) {
+                    found += ids.length;
+                    saveIDs(character.id, ids).then(function(res) {
+                        resolve(found);
                     }, function(err) {
                         debug.error("saveIDs.error", err);
                     });
                 } else {
-                    loop();
+                    debug.error("OOOOOPS!!", url);
+                    debug.log(res);
                 }
-            } else {
-                debug.error("OOOOOPS!!", i, url);
-                debug.log(res);
-            }
-        }, debug.error);
-    })();
+            }, reject);
+        })();
+    });
 };

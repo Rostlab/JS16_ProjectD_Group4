@@ -35,7 +35,7 @@ exports.getTweetsList = function(ids) {
             trim_user:        true
         }, function(err, data, resp) {
             if (err !== null) {
-                reject({err: err, headers: resp.headers});
+                reject(err);
                 return;
             }
             resolve(data);
