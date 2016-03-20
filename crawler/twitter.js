@@ -4,7 +4,7 @@ const cfg       = require('../core/config'),
       twitter   = require('twitter'),
       Tweet     = require('../models/tweet');
 
-var exports   = module.exports = {};
+var exports = module.exports = {};
 
 // init twitter API client
 const client = new twitter(cfg.twitter);
@@ -35,7 +35,7 @@ exports.getTweetsList = function(ids) {
             trim_user:        true
         }, function(err, data, resp) {
             if (err !== null) {
-                reject(err);
+                reject({err: err, headers: resp.headers});
                 return;
             }
             resolve(data);
@@ -44,27 +44,32 @@ exports.getTweetsList = function(ids) {
 };
 
 const codeRateLimited = 88;
+const codeUnavailable = 503;
 
 exports.retryIfRateLimited = function(err, callback) {
     // check if it was because of rate-limiting
     // if yes, wait for time stated in header
-    if(!!err && !!err.headers && err.err.length === 1 &&
-       (err.err[0].code === codeRateLimited)) {
+    if (!!err && !!err.headers && err.err.length === 1) {
+        if (err.err[0].code === codeRateLimited) {
+            var reset = err.headers['x-rate-limit-reset'];
+            if (!!reset) {
+                // determine wait time in seconds
+                var timeout = (reset - Math.floor(new Date() / 1000));
 
-        var reset = err.headers['x-rate-limit-reset'];
-        if (!!reset) {
-            // determine wait time in seconds
-            var timeout = (reset - Math.floor(new Date() / 1000));
+                // Add 5 seconds extra because auf async clock etc
+                timeout += 5;
 
-            // Add 5 seconds extra because auf async clock etc
-            timeout += 5;
-
-            debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
-            setTimeout(callback, timeout*1000);
+                debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+                setTimeout(callback, timeout*1000);
+                return true;
+            }
+        } else if(err.err[0].code === codeUnavailable) {
+            debug.log("503 UNAVAILABLE. Wait 10s");
+            setTimeout(callback, 10*1000);
             return true;
         }
-        return false;
     }
+    return false;
 };
 
 function fetchTweets(characterID, query, maxID) {

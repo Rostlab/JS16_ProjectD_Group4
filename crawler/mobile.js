@@ -45,6 +45,10 @@ function matchIDs(str) {
     return ids;
 }
 
+function formatDate(date) {
+    return new Date(date).toISOString().replace(/T/, ' ').replace(/\..+/, '');
+}
+
 function saveIDs(characterID, ids) {
     return new Promise(function(resolve, reject) {
         twitter.getTweetsList(ids).then(function(tweets) {
@@ -62,7 +66,11 @@ function saveIDs(characterID, ids) {
                     }
                 });
 
-                debug.log(characterID, {found: found, inserted: inserted}, tweets[tweets.length-1].created_at);
+                debug.info(
+                    characterID,
+                    { found: found, inserted: inserted },
+                    formatDate(tweets[tweets.length-1].created_at)
+                );
             }, debug.error);
         }, function(err) {
             function retry() {
@@ -99,7 +107,7 @@ exports.crawl = function(character) {
                         saveIDs(character.id, save).then(function(res) {
                             loop();
                         }, function(err) {
-                            debug.error("saveIDs.error", err);
+                            debug.error("saveIDs.next", err);
                         });
                     } else {
                         loop();
@@ -109,11 +117,13 @@ exports.crawl = function(character) {
                     saveIDs(character.id, ids).then(function(res) {
                         resolve(found);
                     }, function(err) {
-                        debug.error("saveIDs.error", err);
+                        debug.error("saveIDs.done", err);
                     });
                 } else {
-                    debug.error("OOOOOPS!!", url);
-                    debug.log(res);
+                    debug.error("unknown response:", url, res);
+                    found += ids.length;
+                    saveIDs(character.id, ids);
+                    reject(res);
                 }
             }, reject);
         })();
