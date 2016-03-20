@@ -3,6 +3,7 @@
 
 const cfg       = require('./core/config'),
       debug     = require('./core/debug')('crawler', true),
+      blacklist = require('./crawler/blacklist'),
       got       = require('./crawler/got'),
       mobile    = require('./crawler/mobile'),
       twitter   = require('./crawler/twitter'),
@@ -22,6 +23,10 @@ db.once('open', function () {
 
 // TODO: fetch and add episodes when the API is ready
 function saveCharacter(character) {
+    if (blacklist.filter(character.name)) {
+        return;
+    }
+
     // TODO: skip if created / updated date < last checked date
     return Character.addIfNotExists({
         "_id":  character._id,
@@ -35,7 +40,27 @@ function updateCharacters() {
         // Fetch characters from API and then save each to DB
         got.fetchCharacters().then(function(characters) {
             return Promise.all(characters.map(saveCharacter));
-        }).then(resolve, reject);
+        }).then(function(res) {
+            var total = res.length, filtered = 0, found = 0, inserted = 0;
+            if (Array.isArray(res)) {
+                for (var i = 0; i < total; i++) {
+                    if (res[i] === undefined) {
+                        filtered++;
+                        continue;
+                    }
+                    found++;
+                    if(!!res[i].upserted) {
+                        inserted++;
+                    }
+                }
+            }
+            resolve({
+                total: total,
+                filtered: filtered,
+                found: found,
+                inserted: inserted,
+            });
+        }, reject);
     });
 }
 
@@ -97,8 +122,8 @@ function crawlMobile() {
     });
 }
 
-updateCharacters().then(function() {
-    debug.info("Characters updated");
+updateCharacters().then(function(res) {
+    debug.info("Characters updated", res);
 
     /*crawlMobile().then(function() {
         debug.info("Mobile Crawl done");
