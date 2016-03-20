@@ -6,7 +6,7 @@ var exports = module.exports = {};
 
 // Make an API GET request and return response as JSON
 // Returns a Promise (resolved with JSON)
-function apiGet(path, onSuccess, onErr) {
+function apiGet(path) {
     return new Promise(function(resolve, reject) {
         var proto = (cfg.api.https) ? https : http;
         var req = proto.request({
@@ -25,7 +25,7 @@ function apiGet(path, onSuccess, onErr) {
                     resolve(JSON.parse(data));
                 } else {
                     reject({
-                        status: statusCode,
+                        status: res.statusCode,
                         data:   data
                     });
                 }
@@ -42,12 +42,12 @@ function apiGet(path, onSuccess, onErr) {
 
 // Get all episodes as JSON
 // Returns a Promise (resolved with JSON)
-exports.fetchEpisodes = function(onSuccess, onErr) {
-    return apiGet('episodes', onSuccess, onErr);
+exports.fetchEpisodes = function() {
+    return apiGet('episodes');
 };
 
 // Get all characaters as JSON
 // Returns a Promise (resolved with JSON)
-exports.fetchCharacters = function(onSuccess, onErr) {
-    return apiGet('characters', onSuccess, onErr);
+exports.fetchCharacters = function() {
+    return apiGet('characters');
 };

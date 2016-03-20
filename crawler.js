@@ -2,8 +2,10 @@
 "use strict";
 
 const cfg       = require('./core/config'),
-      twitter   = require('./crawler/twitter'),
+      debug     = require('./core/debug')('crawler', true),
       got       = require('./crawler/got'),
+      mobile    = require('./crawler/mobile'),
+      twitter   = require('./crawler/twitter'),
       Character = require('./models/character'),
       mongoose  = require('mongoose'),
       slug      = require('slug');
@@ -12,10 +14,10 @@ const cfg       = require('./core/config'),
 mongoose.connect(cfg.mongodb.uri);
 var db = mongoose.connection;
 db.on('error', function (err) {
-    console.log('connection error', err);
+    debug.error('connection error', err);
 });
 db.once('open', function () {
-    console.log('connected.');
+    debug.info('connected.');
 });
 
 // TODO: fetch and add episodes when the API is ready
@@ -37,66 +39,18 @@ function updateCharacters() {
     });
 }
 
-function crawlTweets(character) {
-    return new Promise(function(resolve, reject) {
-        var maxID    = null,
-            found    = null,
-            totalIns = 0,
-            totalFnd = 0;
-        (function loop() {
-            twitter.fetchTweets(character.id, character.name, maxID).then(function(res) {
-                maxID = res.maxID;
-                found = res.found;
-                totalFnd += res.found;
-                totalIns += res.inserted;
-
-                if (found >= 99 && totalFnd < 1000) { // TODO: remove totalFnd limit
-                    loop();
-                } else {
-                    resolve({found: totalFnd, inserted: totalIns, maxID: maxID});
-                }
-            }, function(err) {
-                // check if it was because of rate-limiting
-                // if yes, wait for time stated in header
-                if(!!err && !!err.headers && err.err.length === 1 &&
-                   (err.err[0].code === twitter.codeRateLimited)) {
-
-                    var reset = err.headers['x-rate-limit-reset'];
-                    if (!!reset) {
-                        // determine wait time in seconds
-                        var timeout = (reset - Math.floor(new Date() / 1000));
-
-                        // Add 5 seconds extra because auf async clock etc
-                        timeout += 5;
-
-                        console.log("TIMEOUT", reset, timeout);
-                        setTimeout(loop, timeout * 1000);
-                    } else {
-                        reject(err.err);
-                    }
-
-                // otherwise stuff went wrong
-                } else {
-                    reject(err);
-                }
-            });
-        })();
-    });
-}
-
-updateCharacters().then(function() {
-    console.log("Characters updated");
-
-    // Crawl Twitter for each Character in DB
-    Character.list().then(function(characters) {
+// Returns Promise for sync
+function crawlAPI() {
+    // Crawl Twitter REST API for each Character in DB
+    return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
             // stats
             var found    = 0,
                 inserted = 0;
 
             (function iterCrawl(i) {
-                crawlTweets(characters[i]).then(function(res) {
-                    console.log("CRWLD", characters[i].name, res);
+                twitter.crawl(characters[i]).then(function(res) {
+                    debug.log("ACRWLD", characters[i].name, res);
                     found    += res.found;
                     inserted += res.inserted;
                     if (++i < characters.length) {
@@ -105,7 +59,7 @@ updateCharacters().then(function() {
                         resolve({found: found, inserted: inserted});
                     }
                 }, function(err) {
-                    console.log("FAILED CRWL", characters[i].name, err);
+                    debug.error("FAILED ACRWL", characters[i].name, err);
                     if (++i < characters.length) {
                         iterCrawl(i);
                     } else {
@@ -114,11 +68,48 @@ updateCharacters().then(function() {
                 });
             })(0);
         });
-    }).then(function(res) {
-        console.log("FULL CRAWL: ", res);
+    });
+}
+
+// Returns Promise for sync
+function crawlMobile() {
+    // Crawl Twitter REST API for each Character in DB
+    return Character.list().then(function(characters) {
+        return new Promise(function(resolve, reject) {
+            (function iterCrawl(i) {
+                mobile.crawl(characters[i]).then(function(res) {
+                    debug.log("MCRWLD", characters[i].name, res);
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve(true);
+                    }
+                }, function(err) {
+                    debug.error("FAILED MCRWL", characters[i].name, err);
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            })(0);
+        });
+    });
+}
+
+updateCharacters().then(function() {
+    debug.info("Characters updated");
+
+    /*crawlMobile().then(function() {
+        debug.info("Mobile Crawl done");
+    }).catch(debug.error);*/
+
+    crawlAPI().then(function(res) {
+        debug.log("FULL CRAWL: ", res);
         mongoose.disconnect();
-    }).catch(console.log);
+    }).catch(debug.eror);
+
 }, function(err) {
-    console.log("ERROR while updating Characters: ", err);
+    debug.error("updating Characters: ", err);
     mongoose.disconnect();
 });

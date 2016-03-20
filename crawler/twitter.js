@@ -1,16 +1,17 @@
 const cfg       = require('../core/config'),
+      debug     = require('../core/debug')('crawler/twitter', true),
       sentiment = require('../crawler/sentiment'),
-      twit      = require('twitter'),
+      twitter   = require('twitter'),
       Tweet     = require('../models/tweet');
 
 var exports   = module.exports = {};
 
 // init twitter API client
-const twitter = new twit(cfg.twitter);
+const client = new twitter(cfg.twitter);
 
-function saveTweet(id, tweet) {
+exports.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
-        character: id,
+        character: characterID,
         uid:       tweet.id,
         text:      tweet.text,
         lang:      tweet.lang,
@@ -19,14 +20,56 @@ function saveTweet(id, tweet) {
         sentiment: sentiment(tweet.text),
         created:   tweet.created_at
     });
-}
+};
 
-exports.codeRateLimited = 88;
+// Returns a Promise for an array of Tweets
+exports.getTweetsList = function(ids) {
+    if (Array.isArray(ids)) {
+        ids = ids.toString();
+    }
 
-exports.fetchTweets = function(id, query, maxID) {
-    //console.log('DEBUG:', 'twitter.fetchTweets', query, maxID);
     return new Promise(function(resolve, reject) {
-        twitter.get('search/tweets', {
+        client.get('statuses/lookup', {
+            id:               ids,
+            include_entities: false,
+            trim_user:        true
+        }, function(err, data, resp) {
+            if (err !== null) {
+                reject(err);
+                return;
+            }
+            resolve(data);
+        });
+    });
+};
+
+const codeRateLimited = 88;
+
+exports.retryIfRateLimited = function(err, callback) {
+    // check if it was because of rate-limiting
+    // if yes, wait for time stated in header
+    if(!!err && !!err.headers && err.err.length === 1 &&
+       (err.err[0].code === codeRateLimited)) {
+
+        var reset = err.headers['x-rate-limit-reset'];
+        if (!!reset) {
+            // determine wait time in seconds
+            var timeout = (reset - Math.floor(new Date() / 1000));
+
+            // Add 5 seconds extra because auf async clock etc
+            timeout += 5;
+
+            debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+            setTimeout(callback, timeout*1000);
+            return true;
+        }
+        return false;
+    }
+};
+
+function fetchTweets(characterID, query, maxID) {
+    return new Promise(function(resolve, reject) {
+        client.get('search/tweets', {
             q:                query,
             include_entities: false,
             count:            100,
@@ -45,7 +88,7 @@ exports.fetchTweets = function(id, query, maxID) {
             }
 
             const ps = Promise.all(tweets.map(function(tweet) {
-                return saveTweet(id, tweet);
+                return exports.saveTweet(characterID, tweet);
             })).then(function(res) {
                 var found    = res.length,
                     inserted = 0;
@@ -65,17 +108,46 @@ exports.fetchTweets = function(id, query, maxID) {
             }, reject);
         });
     });
+}
+
+// 2nd param (optional): Full crawl or just update?
+exports.crawl = function(character, full) {
+    return new Promise(function(resolve, reject) {
+        var maxID    = null,
+            inserted = null,
+            found    = null,
+            totalIns = 0,
+            totalFnd = 0;
+        (function loop() {
+            fetchTweets(character.id, character.name, maxID).then(function(res) {
+                maxID     = res.maxID;
+                found     = res.found;
+                inserted  = res.inserted;
+                totalFnd += found;
+                totalIns += inserted;
+
+                if (((!full && inserted > 0) || (!!full && found >= 99)) && totalFnd < 1000) { // TODO: remove totalFnd limit
+                    loop();
+                } else {
+                    resolve({found: totalFnd, inserted: totalIns, maxID: maxID});
+                }
+            }, function(err) {
+                if (!exports.retryIfRateLimited(err, loop)) {
+                    // otherwise stuff went wrong
+                    reject(err);
+                }
+            });
+        })();
+    });
 };
 
 exports.streamTweets = function(query) {
-    twitter.stream('statuses/filter', {
+    client.stream('statuses/filter', {
         track: query
     }, function(stream) {
         stream.on('data', saveTweet);
 
         // Handle errors
-        stream.on('error', function(error) {
-            console.log(error);
-        });
+        stream.on('error', debug.error);
     });
 };
