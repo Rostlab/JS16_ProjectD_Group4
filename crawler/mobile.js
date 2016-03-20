@@ -91,7 +91,11 @@ exports.crawl = function(character) {
     const doneRe    = /<div class="noresults"> No results for/;
 
     return new Promise(function(resolve, reject) {
-        var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
+        // relaxed search
+        // var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
+
+        // strict search
+        var url = searchURL + '"' + character.name + '"&s=sprv';
         var ids = [];
         var found = 0;
 

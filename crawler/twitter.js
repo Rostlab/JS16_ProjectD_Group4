@@ -124,14 +124,14 @@ exports.crawl = function(character, full) {
             totalIns = 0,
             totalFnd = 0;
         (function loop() {
-            fetchTweets(character.id, character.name, maxID).then(function(res) {
+            fetchTweets(character.id, '"'+character.name+'"', maxID).then(function(res) {
                 maxID     = res.maxID;
                 found     = res.found;
                 inserted  = res.inserted;
                 totalFnd += found;
                 totalIns += inserted;
 
-                if (((!full && inserted > 0) || (!!full && found >= 99)) && totalFnd < 1000) { // TODO: remove totalFnd limit
+                if ((!full && inserted > 0) || (!!full && found >= 99)) {
                     loop();
                 } else {
                     resolve({found: totalFnd, inserted: totalIns, maxID: maxID});
