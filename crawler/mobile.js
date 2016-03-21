@@ -1,38 +1,39 @@
 const cfg     = require('../core/config'),
       debug   = require('../core/debug')('crawler/mobile', true),
-      https   = require('https'),
+      request = require('request'),
       twitter = require('../crawler/twitter');
 
 var mobile = module.exports = {};
 
 // get returns a Promise for the content of the given URL
 // HTTPS only.
-function get(url) {
+function get(url, retries) {
     return new Promise(function(resolve, reject) {
-        var req = https.get(url, function(res) {
-            var data = '';
-
-            res.on('data', function(chunk) {
-                data += chunk;
-            });
-
-            res.on('end', function() {
-                if (res.statusCode === 200) {
-                    resolve(data);
+        request({
+            url: url,
+            timeout: cfg.twitter.timeout
+        }, function (err, resp, body) {
+            if (!!err) {
+                debug.error(url, err);
+                reject(err);
+            } else if (resp.statusCode === 200) {
+                resolve(body);
+            } else {
+                retries = (!retries) ? 0 : retries;
+                if (resp.statusCode >= 500 && retries < 10) {
+                    debug.warn("Retry because of Server Error", resp.statusCode);
+                    ++retries;
+                    setTimeout(function() {
+                        get(url, retries).then(resolve, reject);
+                    }, (retries*retries)*1000);
                 } else {
                     reject({
-                        status: res.statusCode,
-                        data:   data
+                        status: resp.statusCode,
+                        body:   body
                     });
                 }
-            });
+            }
         });
-
-        req.on('error', function(err) {
-            reject(err);
-        });
-
-        req.end();
     });
 }
 
