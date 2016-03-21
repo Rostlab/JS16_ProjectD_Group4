@@ -32,6 +32,7 @@
     "express": "^4.13.4",
     "express-handlebars": "^3.0.0",
     "mongoose": "^4.4.6",
+    "request": "^2.69.0",
     "retext": "^2.0.0",
     "retext-sentiment": "^1.0.0",
     "slug": "^0.9.1",
