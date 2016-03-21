@@ -125,14 +125,15 @@ function crawlMobile() {
 updateCharacters().then(function(res) {
     debug.info("Characters updated", res);
 
-    /*crawlMobile().then(function() {
-        debug.info("Mobile Crawl done");
-    }).catch(debug.error);*/
+    crawlMobile().then(function(res) {
+        debug.log("FULL MCRAWL: ", res);
+        mongoose.disconnect();
+    }).catch(debug.error);
 
-    crawlAPI().then(function(res) {
+    /*crawlAPI().then(function(res) {
         debug.log("FULL CRAWL: ", res);
         mongoose.disconnect();
-    }).catch(debug.eror);
+    }).catch(debug.eror);*/
 
 }, function(err) {
     debug.error("updating Characters: ", err);
