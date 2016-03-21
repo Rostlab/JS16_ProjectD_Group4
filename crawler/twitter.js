@@ -1,15 +1,17 @@
+"use strict";
+
 const cfg       = require('../core/config'),
       debug     = require('../core/debug')('crawler/twitter', true),
       sentiment = require('../crawler/sentiment'),
-      twitter   = require('twitter'),
+      Twit      = require('twit'),
       Tweet     = require('../models/tweet');
 
-var exports = module.exports = {};
+var twitter = module.exports = {};
 
 // init twitter API client
-const client = new twitter(cfg.twitter);
+const client = new Twit(cfg.twitter);
 
-exports.saveTweet = function(characterID, tweet) {
+twitter.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
         character: characterID,
         uid:       tweet.id,
@@ -23,7 +25,7 @@ exports.saveTweet = function(characterID, tweet) {
 };
 
 // Returns a Promise for an array of Tweets
-exports.getTweetsList = function(ids) {
+twitter.getTweetsList = function(ids) {
     if (Array.isArray(ids)) {
         ids = ids.toString();
     }
@@ -34,7 +36,7 @@ exports.getTweetsList = function(ids) {
             include_entities: false,
             trim_user:        true
         }, function(err, data, resp) {
-            if (err !== null) {
+            if (!!err) {
                 reject({err: err, headers: resp.headers});
                 return;
             }
@@ -44,13 +46,12 @@ exports.getTweetsList = function(ids) {
 };
 
 const codeRateLimited = 88;
-const codeUnavailable = 503;
 
-exports.retryIfRateLimited = function(err, callback) {
+twitter.retryIfRateLimited = function(err, callback) {
     // check if it was because of rate-limiting
     // if yes, wait for time stated in header
-    if (!!err && !!err.headers && err.err.length === 1) {
-        if (err.err[0].code === codeRateLimited) {
+    if (!!err && !!err.headers && !!err.err) {
+        if (err.err.code === codeRateLimited) {
             var reset = err.headers['x-rate-limit-reset'];
             if (!!reset) {
                 // determine wait time in seconds
@@ -59,28 +60,32 @@ exports.retryIfRateLimited = function(err, callback) {
                 // Add 5 seconds extra because auf async clock etc
                 timeout += 5;
 
-                debug.log("RL TIMEOUT", timeout+"s [" + new Date(reset*1000) + "]");
+                debug.warn("Rate-Limited. Timeout: "+timeout+"s [" + new Date(reset*1000) + "]");
                 setTimeout(callback, timeout*1000);
                 return true;
             }
-        } else if(err.err[0].code === codeUnavailable) {
-            debug.log("503 UNAVAILABLE. Wait 10s");
-            setTimeout(callback, 10*1000);
+        } else if(err.err.statusCode === 500) {
+            debug.warn("500 Internal Error. Wait 5s");
+            setTimeout(callback, 5*1000);
+            return true;
+        } else if(err.err.statusCode === 503) {
+            debug.warn("503 Unavailable. Wait 5s");
+            setTimeout(callback, 5*1000);
             return true;
         }
     }
     return false;
 };
 
-function fetchTweets(characterID, query, maxID) {
+function fetchTweets(character, maxID) {
     return new Promise(function(resolve, reject) {
         client.get('search/tweets', {
-            q:                query,
+            q:                '"'+character.name+'"',
             include_entities: false,
             count:            100,
             max_id:           maxID
         }, function(err, data, resp) {
-            if (err !== null) {
+            if (!!err) {
                 reject({err: err, headers: resp.headers});
                 return;
             }
@@ -92,8 +97,8 @@ function fetchTweets(characterID, query, maxID) {
                 return;
             }
 
-            const ps = Promise.all(tweets.map(function(tweet) {
-                return exports.saveTweet(characterID, tweet);
+            Promise.all(tweets.map(function(tweet) {
+                return twitter.saveTweet(character.id, tweet);
             })).then(function(res) {
                 var found    = res.length,
                     inserted = 0;
@@ -116,7 +121,7 @@ function fetchTweets(characterID, query, maxID) {
 }
 
 // 2nd param (optional): Full crawl or just update?
-exports.crawl = function(character, full) {
+twitter.crawl = function(character, full) {
     return new Promise(function(resolve, reject) {
         var maxID    = null,
             inserted = null,
@@ -124,7 +129,7 @@ exports.crawl = function(character, full) {
             totalIns = 0,
             totalFnd = 0;
         (function loop() {
-            fetchTweets(character.id, '"'+character.name+'"', maxID).then(function(res) {
+            fetchTweets(character, maxID).then(function(res) {
                 maxID     = res.maxID;
                 found     = res.found;
                 inserted  = res.inserted;
@@ -137,7 +142,7 @@ exports.crawl = function(character, full) {
                     resolve({found: totalFnd, inserted: totalIns, maxID: maxID});
                 }
             }, function(err) {
-                if (!exports.retryIfRateLimited(err, loop)) {
+                if (!twitter.retryIfRateLimited(err, loop)) {
                     // otherwise stuff went wrong
                     reject(err);
                 }
@@ -146,11 +151,11 @@ exports.crawl = function(character, full) {
     });
 };
 
-exports.streamTweets = function(query) {
+twitter.streamTweets = function(query) {
     client.stream('statuses/filter', {
         track: query
     }, function(stream) {
-        stream.on('data', saveTweet);
+        stream.on('data', twitter.saveTweet);
 
         // Handle errors
         stream.on('error', debug.error);
