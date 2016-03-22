@@ -1,4 +1,7 @@
-const mongoose = require('mongoose');
+"use strict";
+
+const mongoose = require('mongoose'),
+      db       = require('../core/db');
 
 // to consider:
 // - tweet can mention more than one character
@@ -7,7 +10,7 @@ const mongoose = require('mongoose');
 
 const tweetSchema = new mongoose.Schema({
     // character id from character Schema
-    character: { type: mongoose.Schema.Types.ObjectId, ref: 'Character', required: true, index: true },
+    character: { type: mongoose.Schema.Types.ObjectId, ref: 'CharacterSentiment', required: true, index: true },
 
     // unique tweet ID (from twitter)
     uid: { type: String, required: true },
@@ -30,7 +33,7 @@ const tweetSchema = new mongoose.Schema({
 
 tweetSchema.index({character: 1, uid: 1}, {unique: true});
 
-var model = mongoose.model('Tweet', tweetSchema);
+var model = db.model('Tweet', tweetSchema);
 
 // Add tweet to DB only if does not exist in the DB yet
 // Returns a Promise
