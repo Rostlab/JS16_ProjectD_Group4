@@ -35,7 +35,11 @@ twitter.getTweetsList = function(ids) {
             trim_user:        true
         }, function(err, data, resp) {
             if (!!err) {
-                reject({err: err, headers: resp.headers});
+                if (!!resp.headers) {
+                    reject({err: err, headers: resp.headers});
+                } else {
+                    reject({err: err});
+                }
                 return;
             }
             resolve(data);
@@ -48,8 +52,8 @@ const codeRateLimited = 88;
 twitter.retryIfRateLimited = function(err, callback) {
     // check if it was because of rate-limiting
     // if yes, wait for time stated in header
-    if (!!err && !!err.headers && !!err.err) {
-        if (err.err.code === codeRateLimited) {
+    if (!!err && !!err.err) {
+        if (err.err.code === codeRateLimited && !!err.headers) {
             var reset = err.headers['x-rate-limit-reset'];
             if (!!reset) {
                 // determine wait time in seconds
