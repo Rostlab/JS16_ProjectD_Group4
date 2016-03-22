@@ -29,6 +29,7 @@
   "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
   "dependencies": {
     "Sentimental": "^1.0.1",
+    "agentkeepalive": "^2.0.5",
     "express": "^4.13.4",
     "express-handlebars": "^3.0.0",
     "mongoose": "^4.4.6",

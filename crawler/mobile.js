@@ -1,9 +1,17 @@
 const cfg     = require('../core/config'),
       debug   = require('../core/debug')('crawler/mobile', true),
       request = require('request'),
-      twitter = require('../crawler/twitter');
+      twitter = require('../crawler/twitter'),
+      Agent   = require('agentkeepalive').HttpsAgent;
 
 var mobile = module.exports = {};
+
+var requestAgent = new Agent({
+    keepAlive: true,
+    maxFreeSockets: 10,
+    timeout: 20000,
+    keepAliveTimeout: 10000
+});
 
 // get returns a Promise for the content of the given URL
 // HTTPS only.
@@ -11,6 +19,7 @@ function get(url, retries) {
     return new Promise(function(resolve, reject) {
         request({
             url: url,
+            agent: requestAgent,
             timeout: cfg.twitter.timeout
         }, function (err, resp, body) {
             if (!!err) {
