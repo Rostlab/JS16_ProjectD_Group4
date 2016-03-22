@@ -1,15 +1,16 @@
 // TODO: merge this into app.js
 "use strict";
 
-const cfg       = require('./core/config'),
-      debug     = require('./core/debug')('crawler', true),
-      blacklist = require('./crawler/blacklist'),
-      got       = require('./crawler/got'),
-      mobile    = require('./crawler/mobile'),
-      twitter   = require('./crawler/twitter'),
-      Character = require('./models/character'),
-      mongoose  = require('mongoose'),
-      slug      = require('slug');
+const cfg        = require('./core/config'),
+      debug      = require('./core/debug')('crawler', true),
+      blacklist  = require('./crawler/blacklist'),
+      got        = require('./crawler/got'),
+      mobile     = require('./crawler/mobile'),
+      twitter    = require('./crawler/twitter'),
+      Character  = require('./models/character'),
+      aggregator = require('./aggregator/aggregator'),
+      mongoose   = require('mongoose'),
+      slug       = require('slug');
 
 // connect to mongodb
 mongoose.connect(cfg.mongodb.uri);
@@ -65,7 +66,7 @@ function updateCharacters() {
 }
 
 // Returns Promise for sync
-function crawlAPI() {
+function crawlAPI(full) {
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
@@ -74,7 +75,8 @@ function crawlAPI() {
                 inserted = 0;
 
             (function iterCrawl(i) {
-                twitter.crawl(characters[i]).then(function(res) {
+                try {
+                twitter.crawl(characters[i], full).then(function(res) {
                     debug.log("ACRWLD", characters[i].name, res);
                     found    += res.found;
                     inserted += res.inserted;
@@ -91,19 +93,23 @@ function crawlAPI() {
                         resolve({found: found, inserted: inserted});
                     }
                 });
+                } catch(err) {
+                    debug.error(err);
+                }
             })(0);
         });
     });
 }
 
 // Returns Promise for sync
-function crawlMobile() {
+function crawlMobile(full) {
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
             (function iterCrawl(i) {
-                mobile.crawl(characters[i]).then(function(res) {
-                    debug.log("MCRWLD", characters[i].name, res);
+                try {
+                mobile.crawl(characters[i], full).then(function(res) {
+                    debug.info("MCRWLD", characters[i].name, res);
                     if (++i < characters.length) {
                         iterCrawl(i);
                     } else {
@@ -117,25 +123,33 @@ function crawlMobile() {
                         resolve(true);
                     }
                 });
+                } catch(err) {
+                    debug.error(err);
+                }
             })(0);
         });
     });
 }
 
+// aggregator.analyzeCharacter("56ea4cff8c27d7c637505d96");
+
 updateCharacters().then(function(res) {
     debug.info("Characters updated", res);
 
-    crawlMobile().then(function(res) {
-        debug.log("FULL MCRAWL: ", res);
+    const full = true;
+
+    crawlMobile(full).then(function(res) {
+        debug.info("MCRAWL FINISHED: ", res);
         mongoose.disconnect();
     }).catch(debug.error);
 
-    /*crawlAPI().then(function(res) {
-        debug.log("FULL CRAWL: ", res);
-        mongoose.disconnect();
-    }).catch(debug.eror);*/
-
+    // crawlAPI().then(function(res) {
+    //     debug.info("ACRAWL FINISHED: ", res);
+    //     mongoose.disconnect();
+    // }).catch(debug.eror);
 }, function(err) {
-    debug.error("updating Characters: ", err);
+    debug.error("Updating Characters: ", err);
     mongoose.disconnect();
 });
+
+
