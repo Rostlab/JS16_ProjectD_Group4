@@ -35,7 +35,7 @@ twitter.getTweetsList = function(ids) {
             trim_user:        true
         }, function(err, data, resp) {
             if (!!err) {
-                if (!!resp.headers) {
+                if (!!resp && !!resp.headers) {
                     reject({err: err, headers: resp.headers});
                 } else {
                     reject({err: err});
@@ -88,7 +88,11 @@ function fetchTweets(character, maxID) {
             max_id:           maxID
         }, function(err, data, resp) {
             if (!!err) {
-                reject({err: err, headers: resp.headers});
+                if (!!resp && !!resp.headers) {
+                    reject({err: err, headers: resp.headers});
+                } else {
+                    reject({err: err});
+                }
                 return;
             }
 
