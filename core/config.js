@@ -1,15 +1,15 @@
-const fs = require('fs');
+const fs    = require('fs'),
+      debug = require('../core/debug');
 
 // read config
 var cfg;
 try {
-    console.log("Parsing config...");
-    cfg = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+    cfg = JSON.parse(fs.readFileSync('defaults.json', 'utf8'));
 } catch (e) {
     if (e.code === 'ENOENT') {
-        console.log('Error: Config file not found!');
+        debug.log('Error: defaults.json not found!');
     } else {
-        console.log('Error:', e);
+        debug.log('Error:', e);
     }
     process.exit(1);
 }
