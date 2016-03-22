@@ -2,7 +2,6 @@
 
 const cfg       = require('../core/config'),
       debug     = require('../core/debug')('crawler/twitter', true),
-      sentiment = require('../crawler/sentiment'),
       Twit      = require('twit'),
       Tweet     = require('../models/tweet');
 
@@ -17,9 +16,8 @@ twitter.saveTweet = function(characterID, tweet) {
         uid:       tweet.id,
         text:      tweet.text,
         lang:      tweet.lang,
-        retweets:  tweet.retweet_count,
-        favorites: tweet.favorite_count,
-        sentiment: sentiment(tweet.text),
+        retweeted: tweet.retweet_count,
+        favorited: tweet.favorite_count,
         created:   tweet.created_at
     });
 };
@@ -37,7 +35,11 @@ twitter.getTweetsList = function(ids) {
             trim_user:        true
         }, function(err, data, resp) {
             if (!!err) {
-                reject({err: err, headers: resp.headers});
+                if (!!resp.headers) {
+                    reject({err: err, headers: resp.headers});
+                } else {
+                    reject({err: err});
+                }
                 return;
             }
             resolve(data);
@@ -50,8 +52,8 @@ const codeRateLimited = 88;
 twitter.retryIfRateLimited = function(err, callback) {
     // check if it was because of rate-limiting
     // if yes, wait for time stated in header
-    if (!!err && !!err.headers && !!err.err) {
-        if (err.err.code === codeRateLimited) {
+    if (!!err && !!err.err) {
+        if (err.err.code === codeRateLimited && !!err.headers) {
             var reset = err.headers['x-rate-limit-reset'];
             if (!!reset) {
                 // determine wait time in seconds

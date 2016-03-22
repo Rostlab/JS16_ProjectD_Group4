@@ -5,37 +5,30 @@ const mongoose = require('mongoose');
 // - number of retweets and favorites can change
 // => tweets inserted once for each character, maybe with different scoring
 
-const tweetSchema = mongoose.Schema({
+const tweetSchema = new mongoose.Schema({
     // character id from character Schema
-    character: {type: mongoose.Schema.Types.ObjectId, ref: 'Character'},
-
-    //character name: {type: String, required:true},
-    name:{type: String, required: true},
+    character: { type: mongoose.Schema.Types.ObjectId, ref: 'Character', required: true, index: true },
 
     // unique tweet ID (from twitter)
-    uid: {type: String, required: true},
+    uid: { type: String, required: true },
 
     // text
-    text: {type: String, required: true},
+    text: { type: String, required: true },
 
     // language of tweet text
-    lang: {type: String, default: "en"},
+    lang: { type: String, default: "en" },
 
     // retweet count
-    retweets: {type: Number, default: 0},
+    retweetd: { type: Number, default: 0 },
 
     // favorite count
-    favorites: {type: Number,default: 0},
-
-    // sentiment score for tweet's text
-    sentiment: {type: Number, default: 0},
+    favorited: { type: Number, default: 0 },
 
     // date when tweet was created
-    created: {type: Date, required: true},
-
-    // date when document was last updated
-    updated: {type: Date, default: Date.now}
+    created: { type: Date, required: true }
 });
+
+tweetSchema.index({character: 1, uid: 1}, {unique: true});
 
 var model = mongoose.model('Tweet', tweetSchema);
 
@@ -43,10 +36,14 @@ var model = mongoose.model('Tweet', tweetSchema);
 // Returns a Promise
 model.addIfNotExists = function(tweet) {
     return model.update(
-        { uid: tweet.uid },
+        { character: tweet.character, uid: tweet.uid },
         { $setOnInsert: tweet },
         { upsert: true }
     );
+};
+
+model.findByCharacterID = function(characterID) {
+    return model.find({ character: characterID });
 };
 
 module.exports = model;
