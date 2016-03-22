@@ -2,7 +2,6 @@
 
 const cfg       = require('../core/config'),
       debug     = require('../core/debug')('crawler/twitter', true),
-      sentiment = require('../crawler/sentiment'),
       Twit      = require('twit'),
       Tweet     = require('../models/tweet');
 
@@ -17,9 +16,8 @@ twitter.saveTweet = function(characterID, tweet) {
         uid:       tweet.id,
         text:      tweet.text,
         lang:      tweet.lang,
-        retweets:  tweet.retweet_count,
-        favorites: tweet.favorite_count,
-        sentiment: sentiment(tweet.text),
+        retweeted: tweet.retweet_count,
+        favorited: tweet.favorite_count,
         created:   tweet.created_at
     });
 };
