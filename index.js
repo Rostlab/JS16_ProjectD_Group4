@@ -3,6 +3,7 @@
 const cfg        = require('./core/config'),
       db         = require('./core/db'),
       debug      = require('./core/debug')('main', true),
+      asset      = require('./core/asset'),
       got        = require('./crawler/got'),
       mobile     = require('./crawler/mobile'),
       twitter    = require('./crawler/twitter'),
@@ -79,6 +80,9 @@ pkg.mostDiscussed = function(n) {
     }
     return Character.find().sort({heat:-1}).limit(n).exec;
 };
+
+pkg.css = asset('public/chart.css');
+pkg.js = asset('public/chart.js');
 
 /*
 (function test() {

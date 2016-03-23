@@ -1,12 +1,15 @@
 "use strict";
 
 const fs    = require('fs'),
+      path  = require('path'),
       debug = require('../core/debug')('core/config', true);
+
+const cfgPath = path.resolve(__dirname, '../defaults.json');
 
 // read config
 var cfg;
 try {
-    cfg = JSON.parse(fs.readFileSync('defaults.json', 'utf8'));
+    cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 } catch (e) {
     if (e.code === 'ENOENT') {
         debug.error('defaults.json not found!');

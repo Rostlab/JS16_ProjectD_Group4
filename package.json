@@ -1,12 +1,11 @@
 {
   "name": "gotsentimental",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "GoT Twitter Sentiment Analysis",
   "main": "index.js",
   "scripts": {
     "test": "gulp test",
-    "hookup": "gulp hook",
-    "start": "node app.js"
+    "hookup": "gulp hook"
   },
   "repository": {
     "type": "git",
@@ -27,10 +26,7 @@
   },
   "homepage": "https://github.com/Rostlab/JS16_ProjectD_Group4#readme",
   "dependencies": {
-    "Sentimental": "^1.0.1",
     "agentkeepalive": "^2.0.5",
-    "express": "^4.13.4",
-    "express-handlebars": "^3.0.0",
     "mongoose": "^4.4.6",
     "request": "^2.69.0",
     "retext": "^2.0.0",
