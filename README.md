@@ -71,6 +71,8 @@ gotsent.update().then(function(res) {
 
 * [.cfg](#gotsentimental.cfg) : <code>Object</code>
 * [.cfg.extend(json)](#gotsentimental.cfg.extend)
+* [.css](#gotsentimental.css)
+* [.js](#gotsentimental.js)
 * [.init()](#gotsentimental.init)
 * [.shutdown()](#gotsentimental.shutdown)
 * [.update([full])](#gotsentimental.update)
@@ -163,6 +165,23 @@ Get the most discussed [characters](#character).
 | --- | --- | --- | --- |
 | [n] | <code>number</code> | <code>10</code> | Number of Characters to return |
 
+<a name="gotsentimental.css"></a>
+### gotsentimental.css
+The Chart CSS file
+
+| Name | Type | Description |
+| --- | --- | --- |
+| path | <code>string</code> | Absolute path to file |
+| serve | <code>function</code> | HTTP handler to serve file |
+
+<a name="gotsentimental.js"></a>
+### gotsentimental.js
+The Chart JS file
+
+| Name | Type | Description |
+| --- | --- | --- |
+| path | <code>string</code> | Absolute path to file |
+| serve | <code>function</code> | HTTP handler to serve file |
 
 ## Testing
 Install Gulp:
