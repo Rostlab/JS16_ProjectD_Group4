@@ -167,7 +167,7 @@ Get the most discussed [characters](#character).
 | [n] | <code>number</code> | <code>10</code> | Number of Characters to return |
 
 <a name="gotsentimental.css"></a>
-### gotsentimental.css
+#### gotsentimental.css
 The Chart CSS file
 
 | Name | Type | Description |
@@ -176,7 +176,7 @@ The Chart CSS file
 | serve | <code>function</code> | HTTP handler to serve file |
 
 <a name="gotsentimental.js"></a>
-### gotsentimental.js
+#### gotsentimental.js
 The Chart JS file
 
 | Name | Type | Description |
