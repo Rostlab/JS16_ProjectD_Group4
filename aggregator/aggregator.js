@@ -14,23 +14,25 @@ var aggregator = module.exports = {};
 //  - update Character in DB
 
 aggregator.analyzeCharacter = function(id) {
-    const start = new Date();
-    Tweet.find({ character: id }).then(function(tweets) {
-        let pos = 0, neg = 0, total = 0;
+    return new Promise(function(resolve, reject) {
+        const start = new Date();
+        Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
+            let pos = 0, neg = 0, total = 0;
 
-        for (var i = 0; i < tweets.length; i++) {
-            const tweet = tweets[i];
-            const sent  = sentiment(tweet.text);
+            for (var i = 0; i < tweets.length; i++) {
+                const tweet = tweets[i];
+                const sent  = sentiment(tweet.text);
 
-            total++;
-            if (sent > 0) {
-                pos++;
-            } else if (sent < 0) {
-                neg++;
+                total++;
+                if (sent > 0) {
+                    pos++;
+                } else if (sent < 0) {
+                    neg++;
+                }
             }
-        }
 
-        const time = new Date().getTime() - start.getTime();
-        debug.log("pos:", pos, " neg:", neg, " total:", total, ' ', time + "ms");
+            const time = new Date().getTime() - start.getTime();
+            resolve({ "pos": pos, "neg": neg, "total": total, "time": time+"ms" });
+        }, reject);
     });
 };

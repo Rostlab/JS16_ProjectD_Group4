@@ -2,7 +2,7 @@
   "name": "gotsentimental",
   "version": "0.0.1",
   "description": "GoT Twitter Sentiment Analysis",
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
     "test": "gulp test",
     "hookup": "gulp hook",
@@ -17,7 +17,6 @@
     "sentiment",
     "twitter",
     "game",
-    "of",
     "thrones",
     "analysis"
   ],

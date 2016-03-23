@@ -1,4 +1,7 @@
-const mongoose = require('mongoose');
+"use strict";
+
+const mongoose = require('mongoose'),
+      db       = require('../core/db');
 
 const characterSchema = mongoose.Schema({
     // character ID (from API)
@@ -24,7 +27,7 @@ const characterSchema = mongoose.Schema({
     updated: {type: Date, default: Date.now}
 });
 
-var model = mongoose.model('Character', characterSchema);
+var model = db.model('CharacterSentiment', characterSchema);
 
 // Add character to DB only if does not exist in the DB yet
 // Returns a Promise
@@ -34,6 +37,10 @@ model.addIfNotExists = function(character) {
         { $setOnInsert: character },
         { upsert: true }
     );
+};
+
+model.byID = function(characterID) {
+    return model.findOne({ _id: characterID });
 };
 
 // Call function for each character in DB

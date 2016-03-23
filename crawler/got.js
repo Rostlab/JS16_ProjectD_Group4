@@ -1,8 +1,13 @@
-const cfg   = require('../core/config'),
-      http  = require('http'),
-      https = require('https');
+"use strict";
 
-var exports = module.exports = {};
+const cfg       = require('../core/config'),
+      blacklist = require('../crawler/blacklist'),
+      Character = require('../models/character'),
+      http      = require('http'),
+      https     = require('https'),
+      slug      = require('slug');
+
+var got = module.exports = {};
 
 // Make an API GET request and return response as JSON
 // Returns a Promise (resolved with JSON)
@@ -42,12 +47,55 @@ function apiGet(path) {
 
 // Get all episodes as JSON
 // Returns a Promise (resolved with JSON)
-exports.fetchEpisodes = function() {
+got.fetchEpisodes = function() {
     return apiGet('episodes');
 };
 
 // Get all characaters as JSON
 // Returns a Promise (resolved with JSON)
-exports.fetchCharacters = function() {
+got.fetchCharacters = function() {
     return apiGet('characters');
+};
+
+// TODO: fetch and add episodes when the API is ready
+function saveCharacter(character) {
+    if (blacklist.filter(character.name)) {
+        return;
+    }
+
+    // TODO: skip if created / updated date < last checked date
+    return Character.addIfNotExists({
+        "_id":  character._id,
+        "name": character.name,
+        "slug": slug(character.name, {lower: true})
+    });
+}
+
+got.updateCharacters = function() {
+    return new Promise(function(resolve, reject) {
+        // Fetch characters from API and then save each to DB
+        got.fetchCharacters().then(function(characters) {
+            return Promise.all(characters.map(saveCharacter));
+        }).then(function(res) {
+            var total = res.length, filtered = 0, found = 0, inserted = 0;
+            if (Array.isArray(res)) {
+                for (var i = 0; i < total; i++) {
+                    if (res[i] === undefined) {
+                        filtered++;
+                        continue;
+                    }
+                    found++;
+                    if(!!res[i].upserted) {
+                        inserted++;
+                    }
+                }
+            }
+            resolve({
+                total: total,
+                filtered: filtered,
+                found: found,
+                inserted: inserted,
+            });
+        }, reject);
+    });
 };

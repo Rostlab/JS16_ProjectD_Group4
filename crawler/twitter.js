@@ -2,13 +2,17 @@
 
 const cfg       = require('../core/config'),
       debug     = require('../core/debug')('crawler/twitter', true),
-      Twit      = require('twit'),
-      Tweet     = require('../models/tweet');
+      Character = require('../models/character'),
+      Tweet     = require('../models/tweet'),
+      Twit      = require('twit');
 
 var twitter = module.exports = {};
 
 // init twitter API client
-const client = new Twit(cfg.twitter);
+var client;
+twitter.connect = function() {
+    client = new Twit(cfg.twitter);
+};
 
 twitter.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
@@ -154,6 +158,42 @@ twitter.crawl = function(character, full) {
                 }
             });
         })();
+    });
+};
+
+// Returns Promise for sync
+twitter.crawlAll = function(full) {
+    // Crawl Twitter REST API for each Character in DB
+    return Character.list().then(function(characters) {
+        return new Promise(function(resolve, reject) {
+            // stats
+            var found    = 0,
+                inserted = 0;
+
+            (function iterCrawl(i) {
+                try {
+                twitter.crawl(characters[i], full).then(function(res) {
+                    debug.log("ACRWLD", characters[i].name, res);
+                    found    += res.found;
+                    inserted += res.inserted;
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve({found: found, inserted: inserted});
+                    }
+                }, function(err) {
+                    debug.error("FAILED ACRWL", characters[i].name, err);
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve({found: found, inserted: inserted});
+                    }
+                });
+                } catch(err) {
+                    debug.error(err);
+                }
+            })(0);
+        });
     });
 };
 
