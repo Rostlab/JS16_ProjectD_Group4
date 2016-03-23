@@ -1,5 +1,5 @@
 # Let's not leak our passwords and API keys :)
-config.json
+example/app/config.json
 
 # mongodb
 data/db/

@@ -1,15 +1,17 @@
 "use strict";
 
-const cfg      = require('./core/config'),
-      express  = require('express'),
-      exphbs   = require('express-handlebars'),
-      mongoose = require('mongoose');
+const express  = require('express'),
+      exphbs   = require('express-handlebars');
+
+const gotsent = require('../../');
+
+const cfg = require('./config.json');
+
+gotsent.cfg.extend(cfg.gotsent);
+gotsent.init();
 
 // load controllers
 const ctrData = require('./controllers/data');
-
-// connect to mongodb
-mongoose.connect(cfg.mongodb.uri);
 
 // init express application
 const app = express();
@@ -20,14 +22,15 @@ app.set('view engine', '.html');
 app.get('/', function(req, res) {
     res.render("home");
 });
-app.use('/:slug.csv', ctrData);
+app.use('/csv/:slug.csv', ctrData);
+
+// serve static content from /assets dir
+const oneDay = 86400000;
+app.use('/assets', express.static(__dirname + '/assets', { maxAge: oneDay }));
+
 app.get('/:slug', function(req, res) {
     res.render("chart");
 });
-
-// serve static content from /public dir
-const oneDay = 86400000;
-app.use(express.static(__dirname + '/public', { maxAge: oneDay }));
 
 // start server
 app.listen(cfg.port);
