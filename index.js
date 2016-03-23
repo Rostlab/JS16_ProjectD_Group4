@@ -20,7 +20,7 @@ pkg.init = function() {
 };
 
 pkg.shutdown = function() {
-    db.close(console.log);
+    db.close();
 };
 
 pkg.update = function(full) {
@@ -60,27 +60,27 @@ pkg.character = function(id) {
 };
 
 pkg.mostPopular = function(n) {
-    if(!!n) {
+    if(n === undefined) {
         n = 10;
     }
     return Character.find().sort({popularity:-1}).limit(n).exec;
 };
 
 pkg.mostHated = function(n) {
-    if(!!n) {
+    if(n === undefined) {
         n = 10;
     }
     return Character.find().sort({popularity:1}).limit(n).exec;
 };
 
 pkg.mostDiscussed = function(n) {
-    if(!!n) {
+    if(n === undefined) {
         n = 10;
     }
     return Character.find().sort({heat:-1}).limit(n).exec;
 };
 
-// TODO: remove
+/*
 (function test() {
     pkg.cfg.extend(require('./config.json'));
     pkg.init();
@@ -93,4 +93,4 @@ pkg.mostDiscussed = function(n) {
         pkg.shutdown();
     });
 })();
-
+*/
