@@ -22,6 +22,7 @@ function get(url, retries) {
     return new Promise(function(resolve, reject) {
         request({
             url: url,
+            gzip: true,
             agent: requestAgent,
             timeout: cfg.twitter.timeout
         }, function (err, resp, body) {
