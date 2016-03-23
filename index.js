@@ -64,21 +64,21 @@ pkg.mostPopular = function(n) {
     if(n === undefined) {
         n = 10;
     }
-    return Character.find().sort({popularity:-1}).limit(n).exec;
+    return Character.find().sort({popularity:-1}).limit(n).exec();
 };
 
 pkg.mostHated = function(n) {
     if(n === undefined) {
         n = 10;
     }
-    return Character.find().sort({popularity:1}).limit(n).exec;
+    return Character.find().sort({popularity:1}).limit(n).exec();
 };
 
 pkg.mostDiscussed = function(n) {
     if(n === undefined) {
         n = 10;
     }
-    return Character.find().sort({heat:-1}).limit(n).exec;
+    return Character.find().sort({heat:-1}).limit(n).exec();
 };
 
 pkg.css = asset('public/chart.css');
