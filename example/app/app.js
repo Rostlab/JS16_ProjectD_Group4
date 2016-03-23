@@ -15,7 +15,7 @@ const ctrData = require('./controllers/data');
 
 // init express application
 const app = express();
-app.engine('.html', exphbs({defaultLayout: 'main', extname: '.html'}));
+app.engine('.html', exphbs({extname: '.html'}));
 app.set('view engine', '.html');
 
 // register routes
@@ -23,6 +23,9 @@ app.get('/', function(req, res) {
     res.render("home");
 });
 app.use('/csv/:slug.csv', ctrData);
+
+app.use('/chart.css', gotsent.css.serve);
+app.use('/chart.js', gotsent.js.serve);
 
 // serve static content from /assets dir
 const oneDay = 86400000;
