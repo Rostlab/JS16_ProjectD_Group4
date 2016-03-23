@@ -1,6 +1,9 @@
 # Let's not leak our passwords and API keys :)
 example/app/config.json
 
+# jsdoc
+out
+
 # mongodb
 data/db/
 
