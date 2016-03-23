@@ -21,16 +21,14 @@ aggregator.analyzeCharacter = function(id) {
 
             for (var i = 0; i < tweets.length; i++) {
                 const tweet = tweets[i];
-                //console.log(tweet.created);
-                /*const sent  = sentiment(tweet.text);
+                const sent  = sentiment(tweet.text);
 
                 total++;
                 if (sent > 0) {
                     pos++;
                 } else if (sent < 0) {
                     neg++;
-                }*/
-                total ++
+                }
             }
 
             const time = new Date().getTime() - start.getTime();

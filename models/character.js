@@ -39,6 +39,10 @@ model.addIfNotExists = function(character) {
     );
 };
 
+model.byID = function(characterID) {
+    return model.findOne({ _id: characterID });
+};
+
 // Call function for each character in DB
 //  callback: function(character)
 // Returns a Promise

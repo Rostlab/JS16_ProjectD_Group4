@@ -12,7 +12,7 @@ var twitter = module.exports = {};
 var client;
 twitter.connect = function() {
     client = new Twit(cfg.twitter);
-}
+};
 
 twitter.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
