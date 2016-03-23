@@ -1,8 +1,11 @@
-const cfg     = require('../core/config'),
-      debug   = require('../core/debug')('crawler/mobile', true),
-      request = require('request'),
-      twitter = require('../crawler/twitter'),
-      Agent   = require('agentkeepalive').HttpsAgent;
+"use strict";
+
+const cfg       = require('../core/config'),
+      debug     = require('../core/debug')('crawler/mobile', true),
+      request   = require('request'),
+      Agent     = require('agentkeepalive').HttpsAgent,
+      twitter   = require('../crawler/twitter'),
+      Character = require('../models/character');
 
 var mobile = module.exports = {};
 
@@ -110,7 +113,7 @@ function formatDate(date) {
 
 // printRes pretty prints the saved stats
 function printRes(name, res) {
-    debug.info(
+    debug.log(
         name,
         "found:", res.found,
         "inserted:", res.inserted,
@@ -196,4 +199,34 @@ mobile.crawl = function(character, full) {
             }, reject);
         })(Promise.resolve(null));
     });
+};
+
+// Returns Promise for sync
+mobile.crawlAll = function(full) {
+    // Crawl Twitter REST API for each Character in DB
+    return Character.list().then(function(characters) {
+        return new Promise(function(resolve, reject) {
+            (function iterCrawl(i) {
+                try {
+                mobile.crawl(characters[i], full).then(function(res) {
+                    debug.info("MCRWLD", characters[i].name, res);
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve(true);
+                    }
+                }, function(err) {
+                    debug.error("MCRWL FAILED", characters[i].name, err);
+                    if (++i < characters.length) {
+                        iterCrawl(i);
+                    } else {
+                        resolve(true);
+                    }
+                });
+                } catch(err) {
+                    debug.error(err);
+                }
+            })(0);
+        });
+    }, debug.error);
 };
