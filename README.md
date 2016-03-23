@@ -13,6 +13,7 @@ Dependencies:
 ## Usage
 You need to [create a Twitter API key](https://apps.twitter.com/) for the crawler.
 
+Example:
 ```js
 const gotsent = require('gotsentimental');
 
@@ -45,10 +46,10 @@ gotsent.update().then(function(res) {
     }, console.error);
 
     // gracefully shut down
-    pkg.shutdown();
+    gotsent.shutdown();
 }, function(err) {
     console.error(err);
-    pkg.shutdown();
+    gotsent.shutdown();
 });
 ```
 
