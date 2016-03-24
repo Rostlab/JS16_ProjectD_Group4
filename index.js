@@ -47,22 +47,23 @@ pkg.shutdown = function() {
 /**
  * Update data by crawling for new tweets and generating new CSV files.
  * @param {boolean} [full=false]  full rebuild or incremental update
+ * @return {Promise<Object>}      A promise to the update results
  */
 pkg.update = function(full) {
-    got.updateCharacters().then(function(res) {
-        debug.info("Characters updated", res);
+    return new Promise(function(resolve, reject) {
+        got.updateCharacters().then(function(res) {
+            debug.info("Characters updated", res);
 
-        mobile.crawlAll(full).then(function(res) {
-            debug.info("MCRAWL FINISHED: ", res);
-        }, debug.error);
+            mobile.crawlAll(full).then(function(res) {
+                resolve(res);
+            }, reject);
 
-        // twitter.crawlAll().then(function(res) {
-        //     debug.info("ACRAWL FINISHED: ", res);
-        // }).catch(debug.eror);
+            // twitter.crawlAll().then(function(res) {
+            //     debug.info("ACRAWL FINISHED: ", res);
+            // }).catch(debug.eror);
 
-        // TODO: Analyze all
-    }, function(err) {
-        debug.error("Updating Characters: ", err);
+            // TODO: Analyze all
+        }, reject);
     });
 };
 
@@ -71,6 +72,7 @@ pkg.update = function(full) {
  * new CSV files.
  * @param {string}  id            ID of the character
  * @param {boolean} [full=false]  full rebuild or incremental update
+ * @return {Promise<Object>}      A promise to the update results
  */
 pkg.updateCharacter = function(id, full) {
     return new Promise(function(resolve, reject) {

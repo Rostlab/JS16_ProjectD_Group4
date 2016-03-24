@@ -76,8 +76,8 @@ gotsent.update().then(function(res) {
 * [.js](#gotsentimental.js)
 * [.init()](#gotsentimental.init)
 * [.shutdown()](#gotsentimental.shutdown)
-* [.update([full])](#gotsentimental.update)
-* [.updateCharacter(id, [full])](#gotsentimental.updateCharacter)
+* [.update([full])](#gotsentimental.update) ⇒ <code>Promise.&lt;Object&gt;</code>
+* [.updateCharacter(id, [full])](#gotsentimental.updateCharacter) ⇒ <code>Promise.&lt;Object&gt;</code>
 * [.character(id)](#gotsentimental.character) ⇒ <code>Promise.&lt;Character&gt;</code>
 * [.mostPopular([n])](#gotsentimental.mostPopular) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostHated([n])](#gotsentimental.mostHated) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
@@ -109,15 +109,17 @@ Close any open resources like the database connection.
 
 
 <a name="gotsentimental.update"></a>
-#### gotsentimental.update([full])
+#### gotsentimental.update([full]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Update data by crawling for new tweets and generating new CSV files.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [full] | <code>boolean</code> | <code>false</code> | full rebuild or incremental update |
 
+**Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the update results.
+
 <a name="gotsentimental.updateCharacter"></a>
-#### gotsentimental.updateCharacter(id, [full])
+#### gotsentimental.updateCharacter(id, [full]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Update data for given [character](#character) by crawling for new tweets and generating
 new CSV files.
 
@@ -125,6 +127,8 @@ new CSV files.
 | --- | --- | --- | --- |
 | id | <code>string</code> |  | ID of the character |
 | [full] | <code>boolean</code> | <code>false</code> | full rebuild or incremental update |
+
+**Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the update results.
 
 <a name="gotsentimental.character"></a>
 #### gotsentimental.character(id) ⇒ <code>Promise.&lt;Character&gt;</code>
