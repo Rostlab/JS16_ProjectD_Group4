@@ -27,12 +27,19 @@ twitter.saveTweet = function(characterID, tweet) {
 };
 
 // Returns a Promise for an array of Tweets
-twitter.getTweetsList = function(ids) {
+twitter.getTweetsList = function(ids, retries) {
     if (Array.isArray(ids)) {
         ids = ids.toString();
     }
 
     return new Promise(function(resolve, reject) {
+        function retry() {
+            ++retries;
+            setTimeout(function() {
+                twitter.getTweetsList(ids, retries).then(resolve).catch(reject);
+            }, (retries*retries)*1000);
+        }
+
         client.get('statuses/lookup', {
             id:               ids,
             include_entities: false,
@@ -42,7 +49,13 @@ twitter.getTweetsList = function(ids) {
                 if (!!resp && !!resp.headers) {
                     reject({err: err, headers: resp.headers});
                 } else {
-                    reject({err: err});
+                    retries = (!retries) ? 0 : retries;
+                    if (retries < cfg.crawler.retries) {
+                        debug.warn("Retry because of Connection Error", err);
+                        retry();
+                    } else {
+                        reject({err: err});
+                    }
                 }
                 return;
             }

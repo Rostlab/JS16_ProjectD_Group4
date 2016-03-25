@@ -91,11 +91,11 @@ got.updateCharacters = function() {
                 }
             }
             resolve({
-                total: total,
+                total:    total,
                 filtered: filtered,
-                found: found,
+                found:    found,
                 inserted: inserted,
             });
-        }, reject);
+        }).catch(reject);
     });
 };
