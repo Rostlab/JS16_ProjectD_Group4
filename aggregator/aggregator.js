@@ -10,27 +10,10 @@ const cfg       = require('../core/config'),
 
 var aggregator = module.exports = {};
 
-const csvHeader = 'date,pos,neg\n';
-
-function writeCSV(dir, file, bucket, dateFunc) {
-    return new Promise(function(resolve, reject) {
-        const keys = Object.keys(bucket);
-        if (keys.length < 1) {
-            // nothing to do here!
-            resolve();
-            return;
-        }
-
-        // CSV header
-        let out = csvHeader;
-
-        // CSV row for every day
-        for (var i = 0; i < keys.length; i++) {
-            const key  = keys[i];
-            const date = dateFunc(key); // get date string from key
-            out += date + "," + bucket[key][0] + "," + bucket[key][1] + "\n";
-        }
-
+// write data string to file
+// creates parent dir if necessary
+function writeFile(dir, file, data) {
+    new Promise(function(resolve, reject) {
         // write CSV file to disk
         mkdirp(dir, function(err) {
             if (!!err) {
@@ -38,7 +21,7 @@ function writeCSV(dir, file, bucket, dateFunc) {
             }
 
             const filename = dir+file+'.csv';
-            fs.writeFile(filename, out, function(err) {
+            fs.writeFile(filename, data, function(err) {
                 debug.info("wrote", filename);
                 if (!!err) {
                     reject(err);
@@ -48,6 +31,29 @@ function writeCSV(dir, file, bucket, dateFunc) {
             });
         });
     });
+}
+
+const csvHeader = 'date,pos,neg\n';
+
+// formats bucket to CSV and writes it to disk
+function writeCSV(dir, file, bucket, dateFunc) {
+    const keys = Object.keys(bucket);
+    if (keys.length < 1) {
+        // nothing to do here!
+        return [Promise.resolve(), ""];
+    }
+
+    // CSV header
+    let out = csvHeader;
+
+    // CSV row for every date
+    for (var i = 0; i < keys.length; i++) {
+        const key  = keys[i];
+        const date = dateFunc(key); // get date string from key
+        out += date + "," + bucket[key][0] + "," + bucket[key][1] + "\n";
+    }
+
+    return [writeFile(dir, file, out), out];
 }
 
 function saveYear(slug, curYear, year) {
@@ -109,10 +115,9 @@ function saveDay(slug, curYear, curDay, day) {
     // congratz, you just saved the day! <3
 }
 
-// ToDO:
+// ToDo:
 //  - optimize sentiment analysis
 //  - keep track of inserted items and skip save
-//  - write overall file
 
 aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
@@ -170,9 +175,13 @@ aggregator.analyzeCharacter = function(id, slug) {
                 if (curYear !== twtYear) {
                     if (curYear !== undefined) {
                         // save buckets
-                        ps.push(saveYear(slug, curYear, year));
-                        ps.push(saveMonth(slug, curYear, curMonth, month));
-                        ps.push(saveDay(slug, curYear, curDay, day));
+                        // we reuse the saved content of a year for overall
+                        let sr = saveYear(slug, curYear, year);
+                        overall += sr[1].slice(csvHeader.length, -1);
+                        ps.push(sr[0]);
+
+                        ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
 
                         // reset buckets
                         year  = {};
@@ -187,8 +196,8 @@ aggregator.analyzeCharacter = function(id, slug) {
                     curMinute = twtMinute;
                 } else if (curMonth !== twtMonth) {
                     // save buckets
-                    ps.push(saveMonth(slug, curYear, curMonth, month));
-                    ps.push(saveDay(slug, curYear, curDay, day));
+                    ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
 
                     // reset buckets
                     month = {};
@@ -200,7 +209,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                     curMinute = twtMinute;
                 } else if (curDay !== twtDay) {
                     // save buckets
-                    ps.push(saveDay(slug, curYear, curDay, day));
+                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
 
                     // reset buckets
                     day = {};
@@ -242,9 +251,16 @@ aggregator.analyzeCharacter = function(id, slug) {
             }
 
             // save buckets
-            ps.push(saveYear(slug, curYear, year));
-            ps.push(saveMonth(slug, curYear, curMonth, month));
-            ps.push(saveDay(slug, curYear, curDay, day));
+            // we reuse the saved content of a year for overall
+            let sr = saveYear(slug, curYear, year);
+            overall += sr[1].slice(csvHeader.length, -1);
+            ps.push(sr[0]);
+
+            ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+            ps.push(saveDay(slug, curYear, curDay, day)[0]);
+
+            // write buffered overall CSV
+            ps.push(writeFile(cfg.csvpath, slug, overall));
 
             // TODO: better scoring
             let popularity = pos-neg;
