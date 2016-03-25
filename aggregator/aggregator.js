@@ -110,26 +110,29 @@ aggregator.analyzeCharacter = function(id, slug) {
                 }
             }
 
-            writeCSV(slug, bucket).then(console.log).catch(debug.error);
+            // TODO
+            const pwrite = writeCSV(slug, bucket);
 
             // TODO: better scoring
             let popularity = pos-neg;
             let heat       = total;
 
             // Update DB
-            Character.update(
+            const pdb = Character.update(
                 { _id: id },
                 { $set: {
                     total:      total,
                     popularity: popularity,
                     heat:       heat,
                     updated:    Date.now()
-                }},
-                console.log
+                }}
             );
 
             const time = new Date().getTime() - start.getTime();
-            resolve({ "pos": pos, "neg": neg, "total": total, "time": time+"ms" });
+            //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
+            //const pstats = Promise.resolve(stats);
+
+            resolve(Promise.all([pwrite, pdb]));
         }).catch(reject);
     });
 };
