@@ -20,6 +20,13 @@ var requestAgent = new Agent({
 // HTTPS only.
 function get(url, retries) {
     return new Promise(function(resolve, reject) {
+        function retry() {
+            ++retries;
+            setTimeout(function() {
+                get(url, retries).then(resolve).catch(reject);
+            }, (retries*retries)*1000);
+        }
+
         request({
             url: url,
             gzip: true,
@@ -27,18 +34,21 @@ function get(url, retries) {
             timeout: cfg.twitter.timeout
         }, function (err, resp, body) {
             if (!!err) {
-                debug.error(url, err);
-                reject(err);
+                retries = (!retries) ? 0 : retries;
+                if (retries < cfg.crawler.retries) {
+                    debug.warn("Retry because of Connection Error", url, err);
+                    retry();
+                } else {
+                    err.url = url;
+                    reject(err);
+                }
             } else if (resp.statusCode === 200) {
                 resolve(body);
             } else {
                 retries = (!retries) ? 0 : retries;
-                if (resp.statusCode >= 500 && retries < 10) {
+                if (resp.statusCode >= 500 && retries < cfg.crawler.retries) {
                     debug.warn("Retry because of Server Error", resp.statusCode);
-                    ++retries;
-                    setTimeout(function() {
-                        get(url, retries).then(resolve, reject);
-                    }, (retries*retries)*1000);
+                    retry();
                 } else {
                     reject({
                         status: resp.statusCode,
@@ -73,15 +83,15 @@ function saveIDs(characterID, ids) {
         twitter.getTweetsList(ids).then(function(tweets) {
             // save all Tweets to DB and resolves with a Promise for stats
             resolve({saved: saveTweets(characterID, tweets)});
-        }, function(err) {
+        }).catch(function(err) {
             // retry on rate-limitation (or service unavailable)
             function retry() {
-                saveIDs(characterID, ids).then(resolve, reject);
+                saveIDs(characterID, ids).then(resolve).catch(reject);
             }
             if (!twitter.retryIfRateLimited(err, retry)) {
                 reject(err); // otherwise stuff went wrong
             }
-        }).catch(reject);
+        });
     });
 }
 
@@ -103,7 +113,7 @@ function saveTweets(characterID, tweets) {
                 inserted: inserted,
                 oldest:   tweets[tweets.length-1].created_at
             });
-        }, reject);
+        }).catch(reject);
     });
 }
 
@@ -166,8 +176,8 @@ mobile.crawl = function(character, full) {
                             // save new IDs block
                             saveIDs(character.id, save).then(function(res) {
                                 loop(res.saved);
-                            });
-                        });
+                            }).catch(reject);
+                        }).catch(reject);
                     } else {
                         loop(wait);
                     }
@@ -188,16 +198,14 @@ mobile.crawl = function(character, full) {
                                 printRes(character.name, stats);
                             }
                             resolve({found: found, inserted: inserted});
-                        });
-                    }, function(err) {
-                        debug.error("saveIDs.done", err);
-                    });
+                        }).catch(reject);
+                    }).catch(reject);
                 } else {
                     debug.error("unknown response:", url, res);
                     saveIDs(character.id, ids);
                     reject(res);
                 }
-            }, reject);
+            }).catch(reject);
         })(Promise.resolve(null));
     });
 };
@@ -208,7 +216,6 @@ mobile.crawlAll = function(full) {
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
             (function iterCrawl(i) {
-                try {
                 mobile.crawl(characters[i], full).then(function(res) {
                     debug.info("MCRWLD", characters[i].name, res);
                     if (++i < characters.length) {
@@ -216,7 +223,7 @@ mobile.crawlAll = function(full) {
                     } else {
                         resolve(true);
                     }
-                }, function(err) {
+                }).catch(function(err) {
                     debug.error("MCRWL FAILED", characters[i].name, err);
                     if (++i < characters.length) {
                         iterCrawl(i);
@@ -224,10 +231,7 @@ mobile.crawlAll = function(full) {
                         resolve(true);
                     }
                 });
-                } catch(err) {
-                    debug.error(err);
-                }
             })(0);
         });
-    }, debug.error);
+    }).catch(debug.error);
 };
