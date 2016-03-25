@@ -49,11 +49,10 @@ function writeCSV(slug, bucket) {
 // ToDO:
 //  - optimize sentiment analysis
 //  - sort into buckets
-//  - write CSV from buckets
 
 aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
-        const start = new Date();
+        //const start = new Date();
 
         Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
             let pos = 0, neg = 0, total = 0;
@@ -122,13 +121,15 @@ aggregator.analyzeCharacter = function(id, slug) {
                 { _id: id },
                 { $set: {
                     total:      total,
+                    positive:   pos,
+                    negative:   neg,
                     popularity: popularity,
                     heat:       heat,
                     updated:    Date.now()
                 }}
             );
 
-            const time = new Date().getTime() - start.getTime();
+            //const time = new Date().getTime() - start.getTime();
             //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
             //const pstats = Promise.resolve(stats);
 
