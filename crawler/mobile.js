@@ -91,7 +91,6 @@ function saveIDs(characterID, ids) {
             if (!twitter.retryIfRateLimited(err, retry)) {
                 reject(err); // otherwise stuff went wrong
             }
-            reject(err);
         });
     });
 }
