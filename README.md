@@ -88,6 +88,7 @@ gotsent.update().then(function(res) {
 Object containing the package configuration.
 The config can be changed by directly overwriting attributes or using
 [.cfg.extend(json)](#gotsentimental.cfg.extend).
+The default values are stored in [`defaults.json`](https://github.com/Rostlab/JS16_ProjectD_Group4/blob/develop/defaults.json). Every value can be overwritten.
 
 <a name="gotsentimental.cfg.extend"></a>
 #### gotsentimental.cfg.extend(json)
