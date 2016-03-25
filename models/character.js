@@ -24,7 +24,7 @@ const characterSchema = mongoose.Schema({
     popularity: {type: Number, default: 0},
 
     // date when document was last updated
-    updated: {type: Date, default: Date.now}
+    updated: {type: Date, default: null}
 });
 
 var model = db.model('CharacterSentiment', characterSchema);

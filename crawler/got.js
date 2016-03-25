@@ -65,9 +65,12 @@ function saveCharacter(character) {
 
     // TODO: skip if created / updated date < last checked date
     return Character.addIfNotExists({
-        "_id":  character._id,
-        "name": character.name,
-        "slug": slug(character.name, {lower: true})
+        "_id":        character._id,
+        "name":       character.name,
+        "slug":       slug(character.name, {lower: true}), // TODO
+        "total":      0,
+        "popularity": 0,
+        "heat":       0
     });
 }
 
