@@ -90,6 +90,7 @@ pkg.updateCharacter = function(id, full) {
 
 /**
  * @typedef Character
+ * @type Object
  * @property {string} name        name of the character
  * @property {string} slug        human-readale URL-identifier for the character
  * @property {string} _id         unique ID
@@ -160,3 +161,34 @@ pkg.css = asset('public/chart.css');
  */
 pkg.js = asset('public/chart.js');
 
+/**
+ * Get stats about tweets in database.
+ * The returned Object has the following attributes:
+ *  total (total number of tweets),
+ *  positive (total number of positive tweets),
+ *  negative (total number of negative tweets).
+ * @return {Promise<Object>} A promise to the stats Object.
+ */
+pkg.stats = function() {
+    return new Promise(function(resolve, reject) {
+        Character.aggregate([
+            { $group: {
+                _id:      null,
+                total:    { $sum: "$total" },
+                positive: { $sum: "$positive" },
+                negative: { $sum: "$negative" }
+            }}
+        ], function (err, results) {
+            if (!!err) {
+                reject(err);
+                return;
+            }
+            const result = results[0];
+            resolve({
+                total:    result.total,
+                positive: result.positive,
+                negative: result.negative
+            });
+        });
+    });
+};

@@ -84,6 +84,7 @@ gotsent.update().then(function(res) {
 * [.mostPopular([n])](#gotsentimental.mostPopular) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostHated([n])](#gotsentimental.mostHated) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostDiscussed([n])](#gotsentimental.mostDiscussed) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
+* [.stats()](#gotsentimental.stats) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="gotsentimental.cfg"></a>
 #### gotsentimental.cfg : <code>Object</code>
@@ -189,6 +190,16 @@ The Chart JS file
 | --- | --- | --- |
 | path | <code>string</code> | Absolute path to file |
 | serve | <code>function</code> | HTTP handler to serve file |
+
+<a name="gotsentimental.stats"></a>
+#### gotsentimental.stats() ⇒ <code>Promise.&lt;Object&gt;</code>
+Get stats about tweets in database.
+The returned Object has the following attributes:
+* `total` (total number of tweets),
+* `positive` (total number of positive tweets),
+* `negative` (total number of negative tweets).
+
+**Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the stats Object
 
 ## Testing
 Install Gulp:
