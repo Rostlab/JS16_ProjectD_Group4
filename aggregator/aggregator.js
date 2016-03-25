@@ -22,7 +22,7 @@ function writeFile(dir, file, data) {
 
             const filename = dir+file+'.csv';
             fs.writeFile(filename, data, function(err) {
-                debug.info("wrote", filename);
+                //debug.info("wrote", filename);
                 if (!!err) {
                     reject(err);
                     return;
@@ -117,7 +117,6 @@ function saveDay(slug, curYear, curDay, day) {
 
 // ToDo:
 //  - optimize sentiment analysis
-//  - keep track of inserted items and skip save
 
 aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
@@ -129,6 +128,9 @@ aggregator.analyzeCharacter = function(id, slug) {
             let year  = {}; // day in year
             let month = {}; // hour in month
             let day   = {}; // minute in day
+
+            // number of items in each bucket
+            let nYear = 0, nMonth = 0, nDay = 0;
 
             // current indices
             // ALL INDICES EXCEPT curYear START WITH 0!
@@ -175,18 +177,27 @@ aggregator.analyzeCharacter = function(id, slug) {
                 if (curYear !== twtYear) {
                     if (curYear !== undefined) {
                         // save buckets
-                        // we reuse the saved content of a year for overall
-                        let sr = saveYear(slug, curYear, year);
-                        overall += sr[1].slice(csvHeader.length, -1);
-                        ps.push(sr[0]);
 
-                        ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                        if (nYear > 0) {
+                            // we reuse the saved content of a year for overall
+                            let sr = saveYear(slug, curYear, year);
+                            overall += sr[1].slice(csvHeader.length, -1);
+                            ps.push(sr[0]);
+
+                            if (nMonth > 0) {
+                                ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+
+                                if (nDay > 0) {
+                                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                                }
+                            }
+                        }
 
                         // reset buckets
                         year  = {};
                         month = {};
                         day   = {};
+                        nYear = nMonth = nDay = 0;
                     }
 
                     curYear   = twtYear;
@@ -196,23 +207,32 @@ aggregator.analyzeCharacter = function(id, slug) {
                     curMinute = twtMinute;
                 } else if (curMonth !== twtMonth) {
                     // save buckets
-                    ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                    if (nMonth > 0) {
+                        ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+
+                        if (nDay > 0) {
+                            ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                        }
+                    }
 
                     // reset buckets
                     month = {};
                     day   = {};
+                    nMonth = nDay = 0;
 
                     curMonth  = twtMonth;
                     curDay    = twtDay;
                     curHour   = twtHour;
                     curMinute = twtMinute;
                 } else if (curDay !== twtDay) {
-                    // save buckets
-                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                    // save bucket
+                    if (nDay > 0) {
+                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                    }
 
-                    // reset buckets
+                    // reset bucket
                     day = {};
+                    nDay = 0;
 
                     curMonth  = twtMonth;
                     curDay    = twtDay;
@@ -225,6 +245,10 @@ aggregator.analyzeCharacter = function(id, slug) {
                 total++;
 
                 if(sent !== 0) {
+                    nYear++;
+                    nMonth++;
+                    nDay++;
+
                     if(!year[curDay]) {
                         year[curDay] = [0, 0];
                     }
@@ -234,7 +258,6 @@ aggregator.analyzeCharacter = function(id, slug) {
                     if(!day[curMinute]) {
                         day[curMinute] = [0, 0];
                     }
-
 
                     if (sent > 0) {
                         pos++;
@@ -251,13 +274,20 @@ aggregator.analyzeCharacter = function(id, slug) {
             }
 
             // save buckets
-            // we reuse the saved content of a year for overall
-            let sr = saveYear(slug, curYear, year);
-            overall += sr[1].slice(csvHeader.length, -1);
-            ps.push(sr[0]);
+            if (nYear > 0) {
+                // we reuse the saved content of a year for overall
+                let sr = saveYear(slug, curYear, year);
+                overall += sr[1].slice(csvHeader.length, -1);
+                ps.push(sr[0]);
 
-            ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-            ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                if (nMonth > 0) {
+                    ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+
+                    if (nDay > 0) {
+                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
+                    }
+                }
+            }
 
             // write buffered overall CSV
             ps.push(writeFile(cfg.csvpath, slug, overall));
