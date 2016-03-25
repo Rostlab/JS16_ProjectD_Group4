@@ -26,7 +26,7 @@ jasmineOpts.config = {
 };
 
 gulp.task("lint", function() {
-    return gulp.src(["*.js", "*.json", "*/*.js", "public/js/*.js"])
+    return gulp.src(["*.js", "*.json", "*/*.js", "public/*.js"])
         .pipe(cache("linting"))
         .pipe(jshint(jshintConfig))
         .pipe(jshint.reporter("jshint-stylish"))
