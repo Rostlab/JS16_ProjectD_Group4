@@ -94,6 +94,8 @@ pkg.updateCharacter = function(id, full) {
  * @property {string} slug        human-readale URL-identifier for the character
  * @property {string} _id         unique ID
  * @property {number} total       total number of tweets in database
+ * @property {number} positive    total number of positive tweets in database
+ * @property {number} negative    total number of negative tweets in database
  * @property {number} heat        how controverse is the character
  * @property {number} popularity  how much is the character is discussed
  * @property {Date}   updated     date when the document was last updated

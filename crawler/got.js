@@ -69,6 +69,8 @@ function saveCharacter(character) {
         "name":       character.name,
         "slug":       slug(character.name, {lower: true}), // TODO
         "total":      0,
+        "positive":   0,
+        "negative":   0,
         "popularity": 0,
         "heat":       0
     });

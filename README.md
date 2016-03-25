@@ -64,6 +64,8 @@ gotsent.update().then(function(res) {
 | slug | <code>string</code> | human-readale URL-identifier for the character |
 | _id | <code>string</code> | unique ID |
 | total | <code>number</code> | total number of tweets in database |
+| positive | <code>number</code> | total number of positive tweets in database |
+| negative | <code>number</code> | total number of negative tweets in database |
 | heat | <code>number</code> | how controverse is the character |
 | popularity | <code>number</code> | how much is the character is discussed |
 | updated | <code>Date</code> | date when the document was last updated |

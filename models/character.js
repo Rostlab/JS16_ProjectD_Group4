@@ -17,6 +17,12 @@ const characterSchema = mongoose.Schema({
     // total number of tweets
     total: {type: Number, default: 0},
 
+    // total number of positive tweets
+    positive: {type: Number, default: 0},
+
+    // total number of negative tweets
+    negative: {type: Number, default: 0},
+
     // how much is this character discussed lately?
     heat: {type: Number, default: 0},
 
