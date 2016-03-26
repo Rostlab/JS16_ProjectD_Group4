@@ -8,7 +8,8 @@ const cfg        = require('./core/config'),
       mobile     = require('./crawler/mobile'),
       twitter    = require('./crawler/twitter'),
       Character  = require('./models/character'),
-      aggregator = require('./aggregator/aggregator');
+      aggregator = require('./aggregator/aggregator'),
+      episodes   = require('./aggregator/episodes');
 
 /**
  * gotsentimental - GoT Twitter Sentiment Analysis
@@ -33,7 +34,6 @@ pkg.cfg = cfg;
 pkg.init = function() {
     db.connect();
     twitter.connect();
-    //pkg.update();
 };
 
 /**
@@ -51,19 +51,29 @@ pkg.shutdown = function() {
  */
 pkg.update = function(full) {
     return new Promise(function(resolve, reject) {
+        const ep = episodes.update().then(function(res) {
+            debug.info("Episodes updated");
+            return true;
+        }).catch(debug.error);
+
         got.updateCharacters().then(function(res) {
             debug.info("Characters updated", res);
 
             mobile.crawlAll(full).then(function(res) {
-                resolve(res);
-            }, reject);
+                debug.info("Crawling completed", res);
+
+                // make sure that ep were also update (haha)
+                ep.then(function() {
+                    debug.info("UPDATE COMPLETE!");
+                    resolve(res);
+                }).catch(reject);
+
+            }).catch(debug.error);
 
             // twitter.crawlAll().then(function(res) {
             //     debug.info("ACRAWL FINISHED: ", res);
             // }).catch(debug.eror);
-
-            // TODO: Analyze all
-        }, reject);
+        }).catch(debug.error);
     });
 };
 
@@ -82,7 +92,13 @@ pkg.updateCharacter = function(id, full) {
             mobile.crawl(character, full).then(function(res) {
                 debug.info("MCRAWL FINISHED: ", res);
 
-                aggregator.analyzeCharacter(id).then(resolve, reject);
+                aggregator.analyzeCharacter(id, character.slug).then(function() {
+                    debug.log("Wrote CSVs for", character.name);
+                    resolve();
+                }, function(err) {
+                    debug.err("FAILED to write CSVs for", character.name, err);
+                    reject();
+                });
             }, reject);
         }, reject);
     });
@@ -90,10 +106,13 @@ pkg.updateCharacter = function(id, full) {
 
 /**
  * @typedef Character
+ * @type Object
  * @property {string} name        name of the character
  * @property {string} slug        human-readale URL-identifier for the character
  * @property {string} _id         unique ID
  * @property {number} total       total number of tweets in database
+ * @property {number} positive    total number of positive tweets in database
+ * @property {number} negative    total number of negative tweets in database
  * @property {number} heat        how controverse is the character
  * @property {number} popularity  how much is the character is discussed
  * @property {Date}   updated     date when the document was last updated
@@ -158,3 +177,34 @@ pkg.css = asset('public/chart.css');
  */
 pkg.js = asset('public/chart.js');
 
+/**
+ * Get stats about tweets in database.
+ * The returned Object has the following attributes:
+ *  total (total number of tweets),
+ *  positive (total number of positive tweets),
+ *  negative (total number of negative tweets).
+ * @return {Promise<Object>} A promise to the stats Object.
+ */
+pkg.stats = function() {
+    return new Promise(function(resolve, reject) {
+        Character.aggregate([
+            { $group: {
+                _id:      null,
+                total:    { $sum: "$total" },
+                positive: { $sum: "$positive" },
+                negative: { $sum: "$negative" }
+            }}
+        ], function (err, results) {
+            if (!!err) {
+                reject(err);
+                return;
+            }
+            const result = results[0];
+            resolve({
+                total:    result.total,
+                positive: result.positive,
+                negative: result.negative
+            });
+        });
+    });
+};

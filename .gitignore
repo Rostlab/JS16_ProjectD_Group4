@@ -1,6 +1,9 @@
 # Let's not leak our passwords and API keys :)
 example/app/config.json
 
+# generated CSV files in the example app
+example/app/csv
+
 # jsdoc
 out
 

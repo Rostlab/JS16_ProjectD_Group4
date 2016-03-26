@@ -17,6 +17,7 @@
     "crawler": {
         "retries": 10
     },
+    "csvpath": "csv/",
     "whitelist": [
         "Ben Plumm",
         "Emmon Cuy",

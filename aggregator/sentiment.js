@@ -1,12 +1,9 @@
-const retext    = require('retext'),
-      sentiment = require('retext-sentiment');
+const polarity = require('polarity');
 
-const processor = retext().use(sentiment);
+function tokenize(value) {
+    return value.toLowerCase().match(/\S+/g);
+}
 
 module.exports = function(text) {
-    var sentimentScore = 0;
-    processor.process(text, function (err, file) {
-        sentimentScore = file.data.retext.tree.data.polarity;
-    });
-    return sentimentScore;
+    return polarity(tokenize(text)).polarity;
 };
