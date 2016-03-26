@@ -28,17 +28,19 @@ app.get('/', function(req, resp) {
     // those are async funcs to we have to wait until the Promises are resolved.
     // but we can do it in parallel and sync them with Promise.all:
     var ps = [];
-    ps[0] = gotsent.mostPopular();
-    ps[1] = gotsent.mostHated();
-    ps[2] = gotsent.mostDiscussed();
+    ps[0] = gotsent.stats();
+    ps[1] = gotsent.mostPopular();
+    ps[2] = gotsent.mostHated();
+    ps[3] = gotsent.mostDiscussed();
 
     // wait for all Promises to be resolved
     Promise.all(ps).then(function(results) {
-        // use the results of all 3 Promises
+        // use the results of all 4 Promises
         resp.render("top", {
-            mostPopular:   results[0],
-            mostHated:     results[1],
-            mostDiscussed: results[2]
+            stats:         results[0],
+            mostPopular:   results[1],
+            mostHated:     results[2],
+            mostDiscussed: results[3]
         });
     })
 });
