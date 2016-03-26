@@ -62,7 +62,7 @@ pkg.update = function(full) {
             mobile.crawlAll(full).then(function(res) {
                 debug.info("Crawling completed", res);
 
-                // make sure that ep were also update (haha)
+                // make sure that the episodes update also completed (haha)
                 ep.then(function() {
                     debug.info("UPDATE COMPLETE!");
                     resolve(res);
@@ -101,6 +101,63 @@ pkg.updateCharacter = function(id, full) {
                 });
             }, reject);
         }, reject);
+    });
+};
+
+var run = false;
+var ploop = null; // not to be confused with 'poop'
+function loop() {
+    ploop = pkg.update(false).then(function() {
+        debug.info("Finished incremental update");
+        return scheduleUpdate();
+    }).catch(function(err) {
+        debug.error("FAILED update:", err);
+        return scheduleUpdate();
+    });
+}
+
+function scheduleUpdate() {
+    ploop = null;
+    if (!run) {
+        return null;
+    }
+    const wait = (+cfg.crawler.loopwait_s)*1000;
+    debug.info("Scheduling next incremental update at", new Date(new Date() + wait));
+    return setTimeout(loop, wait);
+}
+
+/**
+ * Start the update loop.
+ * Waits the amount of secunds set in the config after completing one
+ * iteration before starting the next incremental update.
+ */
+pkg.startUpdateLoop = function() {
+    if (run) {
+        debug.warn("Update loop already running! Aborting.");
+        return;
+    }
+    debug.info("Starting update loop...");
+    run = true;
+    loop();
+};
+
+/**
+ * Stop the update loop.
+ * Waits for the current update to complete, if one is running.
+ * @return {Promise} A promise which resolves when the loop is stopped.
+ */
+pkg.stopUpdateLoop = function() {
+    run = false;
+    if (ploop === null) {
+        debug.info("Stopped update loop");
+        return Promise.resolve();
+    }
+    debug.info("Waiting for current update to finish...");
+    return new Promise(function(resolve, reject) {
+        ploop.then(function() {
+            debug.info("Stopped update loop");
+            resolve();
+        });
     });
 };
 

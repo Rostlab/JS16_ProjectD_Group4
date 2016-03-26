@@ -15,7 +15,8 @@
         "timeout_ms": 30000
     },
     "crawler": {
-        "retries": 10
+        "retries": 10,
+        "loopwait_s": 3600
     },
     "csvpath": "csv/",
     "whitelist": [

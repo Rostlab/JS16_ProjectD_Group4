@@ -30,7 +30,7 @@ gotsent.cfg.extend({
     }
 });
 
-// initilize
+// initialize
 gotsent.init();
 
 // update DB - this might take a few hours
@@ -80,6 +80,8 @@ gotsent.update().then(function(res) {
 * [.shutdown()](#gotsentimental.shutdown)
 * [.update([full])](#gotsentimental.update) ⇒ <code>Promise.&lt;Object&gt;</code>
 * [.updateCharacter(id, [full])](#gotsentimental.updateCharacter) ⇒ <code>Promise.&lt;Object&gt;</code>
+* [.startUpdateLoop()](#gotsentimental.startUpdateLoop)
+* [.stopUpdateLoop()](#gotsentimental.stopUpdateLoop) ⇒ <code>Promise</code>
 * [.character(id)](#gotsentimental.character) ⇒ <code>Promise.&lt;Character&gt;</code>
 * [.mostPopular([n])](#gotsentimental.mostPopular) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostHated([n])](#gotsentimental.mostHated) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
@@ -133,6 +135,17 @@ new CSV files.
 | [full] | <code>boolean</code> | <code>false</code> | full rebuild or incremental update |
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the update results.
+
+<a name="gotsentimental.startUpdateLoop"></a>
+#### gotsentimental.startUpdateLoop()
+Start the update loop.
+Waits the amount of secunds set in the config after completing one iteration before starting the next incremental update.
+
+<a name="gotsentimental.stopUpdateLoop"></a>
+#### gotsentimental.stopUpdateLoop() ⇒ <code>Promise</code>
+Waits for the current update to complete, if one is running.
+
+**Returns**: <code>Promise</code> - A promise which resolves when the loop is stopped.
 
 <a name="gotsentimental.character"></a>
 #### gotsentimental.character(id) ⇒ <code>Promise.&lt;Character&gt;</code>
