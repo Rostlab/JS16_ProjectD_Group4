@@ -8,7 +8,8 @@ const cfg        = require('./core/config'),
       mobile     = require('./crawler/mobile'),
       twitter    = require('./crawler/twitter'),
       Character  = require('./models/character'),
-      aggregator = require('./aggregator/aggregator');
+      aggregator = require('./aggregator/aggregator'),
+      episodes   = require('./aggregator/episodes');
 
 /**
  * gotsentimental - GoT Twitter Sentiment Analysis
@@ -33,7 +34,6 @@ pkg.cfg = cfg;
 pkg.init = function() {
     db.connect();
     twitter.connect();
-    //pkg.update();
 };
 
 /**
@@ -51,19 +51,29 @@ pkg.shutdown = function() {
  */
 pkg.update = function(full) {
     return new Promise(function(resolve, reject) {
+        const ep = episodes.update().then(function(res) {
+            debug.info("Episodes updated");
+            return true;
+        }).catch(debug.error);
+
         got.updateCharacters().then(function(res) {
             debug.info("Characters updated", res);
 
             mobile.crawlAll(full).then(function(res) {
-                resolve(res);
-            }, reject);
+                debug.info("Crawling completed", res);
+
+                // make sure that ep were also update (haha)
+                ep.then(function() {
+                    debug.info("UPDATE COMPLETE!");
+                    resolve(res);
+                }).catch(reject);
+
+            }).catch(debug.error);
 
             // twitter.crawlAll().then(function(res) {
             //     debug.info("ACRAWL FINISHED: ", res);
             // }).catch(debug.eror);
-
-            // TODO: Analyze all
-        }, reject);
+        }).catch(debug.error);
     });
 };
 
@@ -82,7 +92,13 @@ pkg.updateCharacter = function(id, full) {
             mobile.crawl(character, full).then(function(res) {
                 debug.info("MCRAWL FINISHED: ", res);
 
-                aggregator.analyzeCharacter(id).then(resolve, reject);
+                aggregator.analyzeCharacter(id, character.slug).then(function() {
+                    debug.log("Wrote CSVs for", character.name);
+                    resolve();
+                }, function(err) {
+                    debug.err("FAILED to write CSVs for", character.name, err);
+                    reject();
+                });
             }, reject);
         }, reject);
     });

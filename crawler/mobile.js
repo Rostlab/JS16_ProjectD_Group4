@@ -1,11 +1,12 @@
 "use strict";
 
-const cfg       = require('../core/config'),
-      debug     = require('../core/debug')('crawler/mobile', true),
-      request   = require('request'),
-      Agent     = require('agentkeepalive').HttpsAgent,
-      twitter   = require('../crawler/twitter'),
-      Character = require('../models/character');
+const cfg        = require('../core/config'),
+      debug      = require('../core/debug')('crawler/mobile', true),
+      request    = require('request'),
+      Agent      = require('agentkeepalive').HttpsAgent,
+      twitter    = require('../crawler/twitter'),
+      Character  = require('../models/character'),
+      aggregator = require('../aggregator/aggregator');
 
 var mobile = module.exports = {};
 
@@ -210,29 +211,47 @@ mobile.crawl = function(character, full) {
     });
 };
 
+function analyzeCharacter(character) {
+    return aggregator.analyzeCharacter(character.id, character.slug).then(function() {
+        debug.log("Wrote CSVs for", character.name);
+        return true;
+    }, function(err) {
+        debug.err("FAILED to write CSVs for", character.name, err);
+        return true;
+    });
+}
+
 // Returns Promise for sync
 mobile.crawlAll = function(full) {
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
             const total = characters.length;
-            (function iterCrawl(i) {
-                mobile.crawl(characters[i], full).then(function(res) {
-                    debug.info("["+(i+1)+"/"+total+"] MCRWLD", characters[i].name, res);
-                    if (++i < total) {
-                        iterCrawl(i);
-                    } else {
-                        resolve(true);
-                    }
+            (function iterCrawl(i, wait) {
+                let character = characters[i];
+                mobile.crawl(character, full).then(function(res) {
+                    debug.info("["+(i+1)+"/"+total+"] MCRWLD", character.name, res);
+                    wait.then(function() {
+                        const ap = analyzeCharacter(character);
+                        if (++i < total) {
+                            iterCrawl(i, ap);
+                        } else {
+                            resolve(ap);
+                        }
+                    });
+
                 }).catch(function(err) {
-                    debug.error("["+(i+1)+"/"+total+"] MCRWL FAILED", characters[i].name, err);
-                    if (++i < total) {
-                        iterCrawl(i);
-                    } else {
-                        resolve(true);
-                    }
+                    debug.error("["+(i+1)+"/"+total+"] MCRWL FAILED", character.name, err);
+                    wait.then(function() {
+                        const ap = analyzeCharacter(character);
+                        if (++i < total) {
+                            iterCrawl(i, ap);
+                        } else {
+                            resolve(ap);
+                        }
+                    });
                 });
-            })(0);
+            })(0, Promise.resolve());
         });
     }).catch(debug.error);
 };
