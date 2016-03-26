@@ -47,15 +47,21 @@ function get(url, retries) {
                 resolve(body);
             } else {
                 retries = (!retries) ? 0 : retries;
-                if (resp.statusCode >= 500 && retries < cfg.crawler.retries) {
-                    debug.warn("Retry because of Server Error", resp.statusCode);
-                    retry();
-                } else {
-                    reject({
-                        status: resp.statusCode,
-                        body:   body
-                    });
+                if (retries< cfg.crawler.retries) {
+                    if (resp.statusCode >= 500) {
+                        debug.warn("Retry because of Server Error", resp.statusCode);
+                        retry();
+                        return;
+                    } else if (resp.statusCode === 429) {
+                        debug.warn("Too Many Requests - Retry ...");
+                        retry();
+                        return;
+                    }
                 }
+                reject({
+                    status: resp.statusCode,
+                    body:   body
+                });
             }
         });
     });
