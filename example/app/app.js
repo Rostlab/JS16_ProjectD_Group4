@@ -14,6 +14,8 @@ gotsent.cfg.extend(cfg.gotsent);
 // initialize the gotsentimental package
 gotsent.init();
 
+gotsent.update().then(console.log).catch(console.error);
+
 // load controllers
 const ctrData = require('./controllers/data');
 
