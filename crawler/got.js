@@ -4,8 +4,7 @@ const cfg       = require('../core/config'),
       blacklist = require('../crawler/blacklist'),
       Character = require('../models/character'),
       http      = require('http'),
-      https     = require('https'),
-      slug      = require('slug');
+      https     = require('https');
 
 var got = module.exports = {};
 
@@ -67,7 +66,7 @@ function saveCharacter(character) {
     return Character.addIfNotExists({
         "_id":        character._id,
         "name":       character.name,
-        "slug":       slug(character.name, {lower: true}), // TODO
+        "slug":       character.slug,
         "total":      0,
         "positive":   0,
         "negative":   0,
