@@ -41,11 +41,11 @@ function genCSV(dir, file, bucket, dateFunc, write) {
     const keys = Object.keys(bucket);
     if (keys.length < 1) {
         // nothing to do here!
-        return write ? Promise.resolve() : "";
+        return ((write) ? Promise.resolve() : "");
     }
 
     // CSV header
-    let out = (write ? csvHeader : "");
+    let out = ((write) ? csvHeader : "");
 
     // CSV row for every date
     for (var i = 0; i < keys.length; i++) {
@@ -54,12 +54,12 @@ function genCSV(dir, file, bucket, dateFunc, write) {
         out += date + "," + bucket[key][0] + "," + bucket[key][1] + "\n";
     }
 
-    return write ? writeFile(dir, file, out) : out;
+    return ((write) ? writeFile(dir, file, out) : out);
 }
 
 function saveYear(slug, curYear, year) {
     const dir  = cfg.csvpath+slug+'/';
-    const file = ''+curYear;
+    const file = curYear;
 
     return genCSV(dir, file, year, function(key) {
         // calculate missing date information from bucket key
@@ -67,7 +67,7 @@ function saveYear(slug, curYear, year) {
         const day   = key%31 + 1;
 
         // return date string
-        return '' + curYear + '-' +
+        return curYear + '-' +
             ((month > 9) ? month : '0'+month) + '-' +
             ((day   > 9) ? day   : '0'+day);
     }, false);
@@ -77,7 +77,7 @@ function saveMonth(slug, curYear, curMonth, month) {
     curMonth++;
     const _month = ((curMonth > 9) ? curMonth : '0'+curMonth);
     const dir    = cfg.csvpath+slug+'/';
-    const file   = ''+curYear+'-'+_month;
+    const file   = curYear+'-'+_month;
 
     return genCSV(dir, file, month, function(key) {
         // calculate missing date information from bucket key
@@ -85,7 +85,7 @@ function saveMonth(slug, curYear, curMonth, month) {
         const hour  = key%24;
 
         // return date string
-        return '' + curYear + '-' + _month  + '-' +
+        return curYear + '-' + _month  + '-' +
             ((day   > 9) ? day   : '0'+day) + 'T' +
             ((hour  > 9) ? hour  : '0'+hour);
     }, true);
@@ -143,16 +143,14 @@ aggregator.analyzeCharacter = function(id, slug) {
                 // figure out which buckets have to be emptied before we can
                 // process this tweet
                 if (curYear !== twtYear) {
-                    if (curYear !== undefined) {
+                    if (nYear > 0) {
                         // save buckets
 
-                        if (nYear > 0) {
-                            // we write one overal file instead of files per year
-                            overall += saveYear(slug, curYear, year);
+                        // we write one overal file instead of files per year
+                        overall += saveYear(slug, curYear, year);
 
-                            if (nMonth > 0) {
-                                ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-                            }
+                        if (nMonth > 0) {
+                            ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
                         }
 
                         // reset buckets
@@ -161,6 +159,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                         nYear = nMonth = 0;
                     }
 
+                    // update indices
                     curYear   = twtYear;
                     curMonth  = twtMonth;
                     curDay    = twtDay;
@@ -169,12 +168,13 @@ aggregator.analyzeCharacter = function(id, slug) {
                     // save bucket
                     if (nMonth > 0) {
                         ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+
+                        // reset bucket
+                        month  = {};
+                        nMonth = 0;
                     }
 
-                    // reset bucket
-                    month  = {};
-                    nMonth = 0;
-
+                    // update indices
                     curMonth  = twtMonth;
                     curDay    = twtDay;
                     curHour   = twtHour;
@@ -217,8 +217,10 @@ aggregator.analyzeCharacter = function(id, slug) {
                 }
             }
 
-            // write buffered overall CSV
-            ps.push(writeFile(cfg.csvpath, slug, overall));
+            if (pos+neg > 0) {
+                // write buffered overall CSV
+                ps.push(writeFile(cfg.csvpath, slug, overall));
+            }
 
             // TODO: better scoring
             let popularity = pos-neg;
