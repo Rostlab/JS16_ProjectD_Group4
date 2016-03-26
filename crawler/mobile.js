@@ -215,17 +215,18 @@ mobile.crawlAll = function(full) {
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
+            const total = characters.length;
             (function iterCrawl(i) {
                 mobile.crawl(characters[i], full).then(function(res) {
-                    debug.info("MCRWLD", characters[i].name, res);
-                    if (++i < characters.length) {
+                    debug.info("["+(i+1)+"/"+total+"] MCRWLD", characters[i].name, res);
+                    if (++i < total) {
                         iterCrawl(i);
                     } else {
                         resolve(true);
                     }
                 }).catch(function(err) {
-                    debug.error("MCRWL FAILED", characters[i].name, err);
-                    if (++i < characters.length) {
+                    debug.error("["+(i+1)+"/"+total+"] MCRWL FAILED", characters[i].name, err);
+                    if (++i < total) {
                         iterCrawl(i);
                     } else {
                         resolve(true);
