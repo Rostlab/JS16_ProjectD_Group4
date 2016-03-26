@@ -43,9 +43,13 @@ app.get('/', function(req, resp) {
     })
 });
 
-app.use('/chart.css', gotsent.css.serve);
-app.use('/chart.js', gotsent.js.serve);
-
+// serve required static files (chart.css, chart.js and CSV folder)
+app.get('/assets/chart.css', function(req,res) {
+    res.sendFile(gotsent.css);
+});
+app.get('/assets/chart.js', function(req,res) {
+    res.sendFile(gotsent.js);
+});
 const oneHour = 3600000;
 app.use('/csv', express.static(__dirname + '/csv', { maxAge: oneHour }));
 

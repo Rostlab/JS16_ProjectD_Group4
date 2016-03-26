@@ -221,16 +221,16 @@ pkg.mostDiscussed = function(n) {
 };
 
 /**
- * The Chart CSS file
- * @property {string}   path   Absolute path to file
- * @property {function} serve  HTTP handler to serve file
+ * Absolute path to the Chart CSS file.
+ * It should be served with e.g. express' sendFile.
+ * @type {string}
  */
 pkg.css = asset('public/chart.css');
 
 /**
- * The Chart JS file
- * @property {string}   path   Absolute path to file
- * @property {function} serve  HTTP handler to serve file
+ * Absolute path to the Chart JS file.
+ * It should be served with e.g. express' sendFile.
+ * @type {string}
  */
 pkg.js = asset('public/chart.js');
 
