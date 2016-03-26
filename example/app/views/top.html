@@ -5,6 +5,21 @@
     <title>GoT Twitter Sentiment Analysis</title>
 </head>
 <body>
+    <h3>Database</h3>
+    <table style="text-align: left">
+        <tr>
+            <th>Total</th>
+            <td>{{stats.total}}</td>
+        </tr>
+        <tr>
+            <th>Positive</th>
+            <td>{{stats.positive}}</td>
+        </tr>
+        <tr>
+            <th>Negative</th>
+            <td>{{stats.negative}}</td>
+        </tr>
+    </table>
     <h3>Most Popular</h3>
     <ol>
     {{#each mostPopular}}
