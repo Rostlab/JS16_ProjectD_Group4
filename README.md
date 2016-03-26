@@ -74,8 +74,8 @@ gotsent.update().then(function(res) {
 
 * [.cfg](#gotsentimental.cfg) : <code>Object</code>
 * [.cfg.extend(json)](#gotsentimental.cfg.extend)
-* [.css](#gotsentimental.css)
-* [.js](#gotsentimental.js)
+* [.css](#gotsentimental.css) : <code>string</code>
+* [.js](#gotsentimental.js) : <code>string</code>
 * [.init()](#gotsentimental.init)
 * [.shutdown()](#gotsentimental.shutdown)
 * [.update([full])](#gotsentimental.update) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -188,22 +188,14 @@ Get the most discussed [characters](#character).
 | [n] | <code>number</code> | <code>10</code> | Number of Characters to return |
 
 <a name="gotsentimental.css"></a>
-#### gotsentimental.css
-The Chart CSS file
-
-| Name | Type | Description |
-| --- | --- | --- |
-| path | <code>string</code> | Absolute path to file |
-| serve | <code>function</code> | HTTP handler to serve file |
+### gotsentimental.css : <code>string</code>
+Absolute path to the Chart CSS file.
+It should be served with e.g. [express' sendFile](http://expressjs.com/de/api.html#res.sendFile).
 
 <a name="gotsentimental.js"></a>
-#### gotsentimental.js
-The Chart JS file
-
-| Name | Type | Description |
-| --- | --- | --- |
-| path | <code>string</code> | Absolute path to file |
-| serve | <code>function</code> | HTTP handler to serve file |
+### gotsentimental.js : <code>string</code>
+Absolute path to the Chart JS file.
+It should be served with e.g. [express' sendFile](http://expressjs.com/de/api.html#res.sendFile).
 
 <a name="gotsentimental.stats"></a>
 #### gotsentimental.stats() ⇒ <code>Promise.&lt;Object&gt;</code>
