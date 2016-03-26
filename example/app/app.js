@@ -13,8 +13,7 @@ gotsent.cfg.extend(cfg.gotsent);
 
 // initialize the gotsentimental package
 gotsent.init();
-
-gotsent.update().then(console.log).catch(console.error);
+gotsent.startUpdateLoop();
 
 // init express application
 const app = express();
