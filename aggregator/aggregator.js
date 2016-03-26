@@ -26,7 +26,7 @@ function writeFile(dir, file, data) {
                     reject(err);
                     return;
                 }
-                debug.info("wrote", filename);
+                //debug.info("wrote", filename);
                 resolve();
             });
         });
