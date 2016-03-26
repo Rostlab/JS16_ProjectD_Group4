@@ -13,7 +13,7 @@ var aggregator = module.exports = {};
 // write data string to file
 // creates parent dir if necessary
 function writeFile(dir, file, data) {
-    /*new Promise(function(resolve, reject) {
+    new Promise(function(resolve, reject) {
         // write CSV file to disk
         mkdirp(dir, function(err) {
             if (!!err) {
@@ -22,30 +22,30 @@ function writeFile(dir, file, data) {
 
             const filename = dir+file+'.csv';
             fs.writeFile(filename, data, function(err) {
-                //debug.info("wrote", filename);
                 if (!!err) {
                     reject(err);
                     return;
                 }
+                debug.info("wrote", filename);
                 resolve();
             });
         });
-    });*/
+    });
     return Promise.resolve();
 }
 
 const csvHeader = 'date,pos,neg\n';
 
-// formats bucket to CSV and writes it to disk
-function writeCSV(dir, file, bucket, dateFunc) {
+// formats bucket to CSV and either writes it to disk or returns the data string
+function genCSV(dir, file, bucket, dateFunc, write) {
     const keys = Object.keys(bucket);
     if (keys.length < 1) {
         // nothing to do here!
-        return [Promise.resolve(), ""];
+        return write ? Promise.resolve() : "";
     }
 
     // CSV header
-    let out = csvHeader;
+    let out = (write ? csvHeader : "");
 
     // CSV row for every date
     for (var i = 0; i < keys.length; i++) {
@@ -54,14 +54,14 @@ function writeCSV(dir, file, bucket, dateFunc) {
         out += date + "," + bucket[key][0] + "," + bucket[key][1] + "\n";
     }
 
-    return [writeFile(dir, file, out), out];
+    return write ? writeFile(dir, file, out) : out;
 }
 
 function saveYear(slug, curYear, year) {
     const dir  = cfg.csvpath+slug+'/';
     const file = ''+curYear;
 
-    return writeCSV(dir, file, year, function(key) {
+    return genCSV(dir, file, year, function(key) {
         // calculate missing date information from bucket key
         const month = ~~(key / 31) + 1; // bithacks ftw
         const day   = key%31 + 1;
@@ -70,16 +70,16 @@ function saveYear(slug, curYear, year) {
         return '' + curYear + '-' +
             ((month > 9) ? month : '0'+month) + '-' +
             ((day   > 9) ? day   : '0'+day);
-    });
+    }, false);
 }
 
 function saveMonth(slug, curYear, curMonth, month) {
     curMonth++;
     const _month = ((curMonth > 9) ? curMonth : '0'+curMonth);
-    const dir    = cfg.csvpath+slug+'/'+curYear+'/';
-    const file   = ''+_month;
+    const dir    = cfg.csvpath+slug+'/';
+    const file   = ''+curYear+'-'+_month;
 
-    return writeCSV(dir, file, month, function(key) {
+    return genCSV(dir, file, month, function(key) {
         // calculate missing date information from bucket key
         const day   = ~~(key / 24) + 1; // bithacks ftw
         const hour  = key%24;
@@ -88,11 +88,8 @@ function saveMonth(slug, curYear, curMonth, month) {
         return '' + curYear + '-' + _month  + '-' +
             ((day   > 9) ? day   : '0'+day) + 'T' +
             ((hour  > 9) ? hour  : '0'+hour);
-    });
+    }, true);
 }
-
-// ToDo:
-//  - optimize sentiment analysis
 
 aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
@@ -115,8 +112,7 @@ aggregator.analyzeCharacter = function(id, slug) {
             let pos = 0, neg = 0, total = 0;
 
             // output buffer for overall file
-            // Currently basically all years combined.
-            // We therefore just append the buffer when saving a year.
+            // We append here when saving the year bucket
             let overall = csvHeader;
 
             // Promises for sync
@@ -151,10 +147,8 @@ aggregator.analyzeCharacter = function(id, slug) {
                         // save buckets
 
                         if (nYear > 0) {
-                            // we reuse the saved content of a year for overall
-                            let sr = saveYear(slug, curYear, year);
-                            overall += sr[1].slice(csvHeader.length, -1);
-                            ps.push(sr[0]);
+                            // we write one overal file instead of files per year
+                            overall += saveYear(slug, curYear, year);
 
                             if (nMonth > 0) {
                                 ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
@@ -215,10 +209,8 @@ aggregator.analyzeCharacter = function(id, slug) {
 
             // save buckets
             if (nYear > 0) {
-                // we reuse the saved content of a year for overall
-                let sr = saveYear(slug, curYear, year);
-                overall += sr[1].slice(csvHeader.length, -1);
-                ps.push(sr[0]);
+                // we write one overal file instead of files per year
+                overall += saveYear(slug, curYear, year);
 
                 if (nMonth > 0) {
                     ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
