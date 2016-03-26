@@ -56,6 +56,21 @@ gotsent.update().then(function(res) {
 ```
 
 ## API
+### Generated CSV files
+The crawler generates static CSV files in the directory set in the config (`"csvpath"`).
+These files have to be made available, e.g. by using [`express.static(__dirname + '/csv');`](http://expressjs.com/en/starter/static-files.html). See [example/app](https://github.com/Rostlab/JS16_ProjectD_Group4/tree/develop/example/app) for an example.
+
+The following files are generated and required by [chart.js](#gotsentimental.js):
+
+##### Episodes:
+`/csv/episodes.csv`
+
+##### Data per Character:
+```
+/csv/Character_Name.csv               (complete overview, grouped per day)
+/csv/Character_Name/2016-03.csv       (monthly overview, grouped per hour)
+```
+
 ### Types
 
 #### Character
