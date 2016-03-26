@@ -29,9 +29,8 @@
     "agentkeepalive": "^2.0.5",
     "mkdirp": "^0.5.1",
     "mongoose": "^4.4.6",
+    "polarity": "^0.2.0",
     "request": "^2.69.0",
-    "retext": "^2.0.0",
-    "retext-sentiment": "^1.0.0",
     "twit": "^2.2.3"
   },
   "devDependencies": {
