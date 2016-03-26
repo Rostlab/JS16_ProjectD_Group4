@@ -105,8 +105,7 @@ aggregator.analyzeCharacter = function(id, slug) {
             let nYear = 0, nMonth = 0;
 
             // current indices
-            // ALL INDICES EXCEPT curYear START WITH 0!
-            let curYear, curMonth, curDay, curHour;
+            let curYear, curMonth;
 
             // aggregates
             let pos = 0, neg = 0, total = 0;
@@ -127,17 +126,17 @@ aggregator.analyzeCharacter = function(id, slug) {
                 // year
                 const twtYear = created.getUTCFullYear();
 
-                // month
+                // month [0-11]
                 const twtMonth = created.getUTCMonth();
 
-                // day in year.
-                // actually our "year" has 12*31 days. it doesn't matter that
-                // not all of these days actually exist.
-                const _twtDay = created.getUTCDate() - 1; // must start with 0
+                // day in year [0 - 371]
+                // our "year" has 12*31 days. it doesn't matter that not all of
+                // these dates actually exist.
+                const _twtDay = created.getUTCDate() - 1; // [0-30], shifted to 0
                 const twtDay = (twtMonth * 31) + _twtDay;
 
-                // hour in month
-                const _twtHour = created.getUTCHours();
+                // hour in month [0-731]
+                const _twtHour = created.getUTCHours(); // [0-23]
                 const twtHour = (_twtDay * 24) + _twtHour;
 
                 // figure out which buckets have to be emptied before we can
@@ -162,8 +161,6 @@ aggregator.analyzeCharacter = function(id, slug) {
                     // update indices
                     curYear   = twtYear;
                     curMonth  = twtMonth;
-                    curDay    = twtDay;
-                    curHour   = twtHour;
                 } else if (curMonth !== twtMonth) {
                     // save bucket
                     if (nMonth > 0) {
@@ -174,10 +171,8 @@ aggregator.analyzeCharacter = function(id, slug) {
                         nMonth = 0;
                     }
 
-                    // update indices
+                    // update index
                     curMonth  = twtMonth;
-                    curDay    = twtDay;
-                    curHour   = twtHour;
                 }
 
                 // calculate sentiment for tweet
@@ -188,21 +183,21 @@ aggregator.analyzeCharacter = function(id, slug) {
                     nYear++;
                     nMonth++;
 
-                    if(!year[curDay]) {
-                        year[curDay] = [0, 0];
+                    if(!year.hasOwnProperty(twtDay)) {
+                        year[twtDay] = [0, 0];
                     }
-                    if(!month[curHour]) {
-                        month[curHour] = [0, 0];
+                    if(!month.hasOwnProperty(twtHour)) {
+                        month[twtHour] = [0, 0];
                     }
 
                     if (sent > 0) {
                         pos++;
-                        year[curDay][0]++;
-                        month[curHour][0]++;
+                        year[twtDay][0]++;
+                        month[twtHour][0]++;
                     } else if (sent < 0) {
                         neg++;
-                        year[curDay][1]++;
-                        month[curHour][1]++;
+                        year[twtDay][1]++;
+                        month[twtHour][1]++;
                     }
                 }
             }
