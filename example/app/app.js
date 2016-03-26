@@ -16,9 +16,6 @@ gotsent.init();
 
 gotsent.update().then(console.log).catch(console.error);
 
-// load controllers
-const ctrData = require('./controllers/data');
-
 // init express application
 const app = express();
 app.engine('.html', exphbs({extname: '.html'}));
@@ -46,17 +43,19 @@ app.get('/', function(req, resp) {
         });
     })
 });
-app.use('/csv/:slug.csv', ctrData);
 
 app.use('/chart.css', gotsent.css.serve);
 app.use('/chart.js', gotsent.js.serve);
 
+const oneHour = 3600000;
+app.use('/csv', express.static(__dirname + '/csv', { maxAge: oneHour }));
+
 // serve static content from /assets dir
-const oneDay = 86400000;
+const oneDay = 24 * oneHour;
 app.use('/assets', express.static(__dirname + '/assets', { maxAge: oneDay }));
 
 app.get('/:slug', function(req, res) {
-    res.render("chart");
+    res.render("chart", {slug: req.params.slug});
 });
 
 // start server
