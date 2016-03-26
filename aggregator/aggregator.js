@@ -13,7 +13,7 @@ var aggregator = module.exports = {};
 // write data string to file
 // creates parent dir if necessary
 function writeFile(dir, file, data) {
-    new Promise(function(resolve, reject) {
+    /*new Promise(function(resolve, reject) {
         // write CSV file to disk
         mkdirp(dir, function(err) {
             if (!!err) {
@@ -30,7 +30,8 @@ function writeFile(dir, file, data) {
                 resolve();
             });
         });
-    });
+    });*/
+    return Promise.resolve();
 }
 
 const csvHeader = 'date,pos,neg\n';
@@ -90,31 +91,6 @@ function saveMonth(slug, curYear, curMonth, month) {
     });
 }
 
-function saveDay(slug, curYear, curDay, day) {
-    // estimated number of bugs: > 9000
-    // i'm really really sorry for that code :(
-    const __month = ~~(curDay / 31) + 1; // bithacks ftw
-    const __day   = curDay%31 + 1;
-    const _month  = ((__month > 9) ? __month : '0'+__month);
-    const _day    = ((__day   > 9) ? __day   : '0'+__day);
-
-    const dir     = cfg.csvpath+slug+'/'+curYear+'/'+_month+'/';
-    const file    = ''+_day;
-
-    return writeCSV(dir, file, day, function(key) {
-        // calculate missing date information from bucket key
-        const hour   = ~~(key / 60); // bithacks ftw
-        const minute = key%60;
-
-        // return date string
-        return '' + curYear + '-' + _month + '-' + _day + 'T' +
-            ((hour   > 9) ? hour   : '0'+hour) + ':' +
-            ((minute > 9) ? minute : '0'+minute);
-    });
-
-    // congratz, you just saved the day! <3
-}
-
 // ToDo:
 //  - optimize sentiment analysis
 
@@ -127,14 +103,13 @@ aggregator.analyzeCharacter = function(id, slug) {
             // data buckets
             let year  = {}; // day in year
             let month = {}; // hour in month
-            let day   = {}; // minute in day
 
             // number of items in each bucket
-            let nYear = 0, nMonth = 0, nDay = 0;
+            let nYear = 0, nMonth = 0;
 
             // current indices
             // ALL INDICES EXCEPT curYear START WITH 0!
-            let curYear, curMonth, curDay, curHour, curMinute;
+            let curYear, curMonth, curDay, curHour;
 
             // aggregates
             let pos = 0, neg = 0, total = 0;
@@ -169,9 +144,6 @@ aggregator.analyzeCharacter = function(id, slug) {
                 const _twtHour = created.getUTCHours();
                 const twtHour = (_twtDay * 24) + _twtHour;
 
-                // minute of the day
-                const twtMinute = (_twtHour * 60) + created.getUTCMinutes();
-
                 // figure out which buckets have to be emptied before we can
                 // process this tweet
                 if (curYear !== twtYear) {
@@ -186,58 +158,32 @@ aggregator.analyzeCharacter = function(id, slug) {
 
                             if (nMonth > 0) {
                                 ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-
-                                if (nDay > 0) {
-                                    ps.push(saveDay(slug, curYear, curDay, day)[0]);
-                                }
                             }
                         }
 
                         // reset buckets
                         year  = {};
                         month = {};
-                        day   = {};
-                        nYear = nMonth = nDay = 0;
+                        nYear = nMonth = 0;
                     }
 
                     curYear   = twtYear;
                     curMonth  = twtMonth;
                     curDay    = twtDay;
                     curHour   = twtHour;
-                    curMinute = twtMinute;
                 } else if (curMonth !== twtMonth) {
-                    // save buckets
+                    // save bucket
                     if (nMonth > 0) {
                         ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-
-                        if (nDay > 0) {
-                            ps.push(saveDay(slug, curYear, curDay, day)[0]);
-                        }
-                    }
-
-                    // reset buckets
-                    month = {};
-                    day   = {};
-                    nMonth = nDay = 0;
-
-                    curMonth  = twtMonth;
-                    curDay    = twtDay;
-                    curHour   = twtHour;
-                    curMinute = twtMinute;
-                } else if (curDay !== twtDay) {
-                    // save bucket
-                    if (nDay > 0) {
-                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
                     }
 
                     // reset bucket
-                    day = {};
-                    nDay = 0;
+                    month  = {};
+                    nMonth = 0;
 
                     curMonth  = twtMonth;
                     curDay    = twtDay;
                     curHour   = twtHour;
-                    curMinute = twtMinute;
                 }
 
                 // calculate sentiment for tweet
@@ -247,7 +193,6 @@ aggregator.analyzeCharacter = function(id, slug) {
                 if(sent !== 0) {
                     nYear++;
                     nMonth++;
-                    nDay++;
 
                     if(!year[curDay]) {
                         year[curDay] = [0, 0];
@@ -255,20 +200,15 @@ aggregator.analyzeCharacter = function(id, slug) {
                     if(!month[curHour]) {
                         month[curHour] = [0, 0];
                     }
-                    if(!day[curMinute]) {
-                        day[curMinute] = [0, 0];
-                    }
 
                     if (sent > 0) {
                         pos++;
                         year[curDay][0]++;
                         month[curHour][0]++;
-                        day[curMinute][0]++;
                     } else if (sent < 0) {
                         neg++;
                         year[curDay][1]++;
                         month[curHour][1]++;
-                        day[curMinute][1]++;
                     }
                 }
             }
@@ -282,10 +222,6 @@ aggregator.analyzeCharacter = function(id, slug) {
 
                 if (nMonth > 0) {
                     ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-
-                    if (nDay > 0) {
-                        ps.push(saveDay(slug, curYear, curDay, day)[0]);
-                    }
                 }
             }
 
