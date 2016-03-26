@@ -13,6 +13,8 @@ Dependencies:
 ## Usage
 You need to [create a Twitter API key](https://apps.twitter.com/) for the crawler.
 
+See [example/app](https://github.com/Rostlab/JS16_ProjectD_Group4/tree/develop/example/app) for an advanced example.
+
 Example:
 ```js
 const gotsent = require('gotsentimental');
