@@ -22,11 +22,12 @@ episodes.update = function() {
             // entry for each episode
             for (var i = 0; i < eps.length; i++) {
                 const ep = eps[i];
+                const date   = ep.airDate.slice(0,10);
                 const season = ep.season, nr = ep.nr;
-                const code = "S" + ((season > 9) ? season : "0"+season) +
-                             "E" + ((nr > 9) ? nr : "0"+nr);
+                const code   = "S" + ((season > 9) ? season : "0"+season) +
+                               "E" + ((nr > 9) ? nr : "0"+nr);
 
-                out += ep.airDate + "," + code + ",\"" + ep.name + "\"\n";
+                out += date + "," + code + ",\"" + ep.name + "\"\n";
             }
 
             // write CSV file to disk
