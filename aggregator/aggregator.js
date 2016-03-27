@@ -38,8 +38,7 @@ const csvHeader = 'date,pos,neg\n';
 
 // formats bucket to CSV and either writes it to disk or returns the data string
 function genCSV(dir, file, bucket, dateFunc, write) {
-    const keys = Object.keys(bucket);
-    if (keys.length < 1) {
+    if (bucket.length < 1) {
         // nothing to do here!
         return ((write) ? Promise.resolve() : "");
     }
@@ -48,8 +47,7 @@ function genCSV(dir, file, bucket, dateFunc, write) {
     let out = ((write) ? csvHeader : "");
 
     // CSV row for every date
-    for (var i = 0; i < keys.length; i++) {
-        const key  = keys[i];
+    for (var key in bucket) {
         const date = dateFunc(key); // get date string from key
         out += date + "," + bucket[key][0] + "," + bucket[key][1] + "\n";
     }
@@ -98,8 +96,8 @@ aggregator.analyzeCharacter = function(id, slug) {
         Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
 
             // data buckets
-            let year  = {}; // day in year
-            let month = {}; // hour in month
+            let year  = []; // day in year
+            let month = []; // hour in month
 
             // number of items in each bucket
             let nYear = 0, nMonth = 0;
@@ -153,8 +151,8 @@ aggregator.analyzeCharacter = function(id, slug) {
                         }
 
                         // reset buckets
-                        year  = {};
-                        month = {};
+                        year  = [];
+                        month = [];
                         nYear = nMonth = 0;
                     }
 
@@ -167,7 +165,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                         ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
 
                         // reset bucket
-                        month  = {};
+                        month  = [];
                         nMonth = 0;
                     }
 
@@ -183,10 +181,10 @@ aggregator.analyzeCharacter = function(id, slug) {
                     nYear++;
                     nMonth++;
 
-                    if(!year.hasOwnProperty(twtDay)) {
+                    if(year.indexOf(twtDay) === -1) {
                         year[twtDay] = [0, 0];
                     }
-                    if(!month.hasOwnProperty(twtHour)) {
+                    if(month.indexOf(twtHour) === -1) {
                         month[twtHour] = [0, 0];
                     }
 
