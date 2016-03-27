@@ -145,22 +145,39 @@ mobile.crawl = function(character, full) {
     const nextRe    = /search\?q=(.+)"> Load older Tweets/;
     const doneRe    = /<div class="noresults"> No results for/;
 
+    // Number of Tweets after which retry with another "until:(lastDay)" query
+    // when the history ends. For some popular characters the history ends early.
+    const retryThreshold = 5000;
+
     return new Promise(function(resolve, reject) {
         // relaxed search
         // var url = searchURL + character.name.split(' ').join('+') + '&s=typd';
 
         // strict search
-        var url = searchURL + '"' + character.name + '"&s=sprv';
-        var ids = [];
-        var found = 0, inserted = 0;
+        let url = searchURL + '"' + character.name + '"&s=sprv';
+        let ids = [];
+        let found = 0, inserted = 0;
+        let retried = false;
+        let lastDay = null;
 
         (function loop(wait) {
             // get mobile search result
             get(url).then(function(res) {
                 // do more result pages exist?
                 var next = res.match(nextRe);
-                if (next) {
-                    url = searchURL + next[1];
+                if (next || (!retried && found >= retryThreshold)) {
+                    // next request url
+                    if (next) {
+                        retried = false;
+                        url = searchURL + next[1];
+                    } else {
+                        retried = true;
+                        const newQuery = '"' + character.name + '" until:' +
+                            new Date(lastDay).toISOString().slice(0,10) + '&s=sprv';
+                        debug.log("History ended. Retry with new query: " + newQuery);
+                        url = searchURL + newQuery;
+                    }
+
                     ids = ids.concat(matchIDs(res));
 
                     // make blocks of 100 IDs
@@ -173,6 +190,8 @@ mobile.crawl = function(character, full) {
                                 found    += stats.found;
                                 inserted += stats.inserted;
                                 printRes(character.name, stats);
+
+                                lastDay = stats.oldest;
 
                                 if (!full && stats.inserted === 0) {
                                     resolve({found: found, inserted: inserted});
@@ -191,6 +210,8 @@ mobile.crawl = function(character, full) {
 
                 // this is the last results page
                 } else if (res.match(doneRe)) {
+                    ids = ids.concat(matchIDs(res));
+
                     if (ids.length === 0) {
                         resolve({found: found, inserted: inserted});
                         return;
