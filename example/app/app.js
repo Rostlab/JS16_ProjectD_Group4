@@ -14,6 +14,7 @@ gotsent.cfg.extend(cfg.gotsent);
 // initialize the gotsentimental package
 gotsent.init();
 gotsent.startUpdateLoop();
+gotsent.startStream();
 
 // init express application
 const app = express();
