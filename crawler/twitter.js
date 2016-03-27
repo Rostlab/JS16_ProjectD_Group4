@@ -47,7 +47,12 @@ twitter.getTweetsList = function(ids, retries) {
         }, function(err, data, resp) {
             if (!!err) {
                 if (!!resp && !!resp.headers) {
-                    reject({err: err, headers: resp.headers});
+                    if (err.errno === -3) {
+                        debug.warn("Retry because of Compression Error");
+                        retry();
+                    } else {
+                        reject({err: err, headers: resp.headers});
+                    }
                 } else {
                     retries = (!retries) ? 0 : retries;
                     if (retries < cfg.crawler.retries) {
