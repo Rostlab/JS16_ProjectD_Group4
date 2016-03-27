@@ -4,6 +4,7 @@ const cfg        = require('../core/config'),
       debug      = require('../core/debug')('crawler/mobile', true),
       request    = require('request'),
       Agent      = require('agentkeepalive').HttpsAgent,
+      cache      = require('../crawler/cache'),
       twitter    = require('../crawler/twitter'),
       Character  = require('../models/character'),
       aggregator = require('../aggregator/aggregator');
@@ -180,6 +181,20 @@ mobile.crawl = function(character, full) {
 
                     ids = ids.concat(matchIDs(res));
 
+                    // if we already have the maxID, then there are no new results.
+                    if (!full && found === 0) {
+                        // JavaScript is really really broken...
+                        const maxID  = Math.max.apply(Math, ids);
+                        const cached = cache.maxID[character.id];
+
+                        if (maxID === cached) {
+                            resolve({found: found, inserted: inserted});
+                            return;
+                        } else {
+                            cache.maxID[character.id] = maxID;
+                        }
+                    }
+
                     // make blocks of 100 IDs
                     if (ids.length >= 100) {
                         // wait until to previous DB write is done
@@ -250,6 +265,11 @@ function analyzeCharacter(character) {
 
 // Returns Promise for sync
 mobile.crawlAll = function(full) {
+    // we don't care when the cache is available - or if it is ever available
+    if (!full) {
+        cache.fill();
+    }
+
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
