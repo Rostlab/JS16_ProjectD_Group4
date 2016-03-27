@@ -191,6 +191,8 @@ mobile.crawl = function(character, full) {
 
                 // this is the last results page
                 } else if (res.match(doneRe)) {
+                    ids = ids.concat(matchIDs(res));
+
                     if (ids.length === 0) {
                         resolve({found: found, inserted: inserted});
                         return;
