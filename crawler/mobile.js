@@ -266,9 +266,13 @@ function analyzeCharacter(character) {
 // Returns Promise for sync
 mobile.crawlAll = function(full) {
     // we don't care when the cache is available - or if it is ever available
-    if (!full) {
+    if (full !== true) {
         cache.fill();
     }
+
+    // write CSV on every first run - the algo might have changed or we might be
+    // in the "cloud" and don't have persistent memory.
+    const forceWrite = (cache.cold && full !== true);
 
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
@@ -279,22 +283,27 @@ mobile.crawlAll = function(full) {
                 mobile.crawl(character, full).then(function(res) {
                     debug.info("["+(i+1)+"/"+total+"] MCRWLD", character.name, res);
                     wait.then(function() {
-                        const ap = analyzeCharacter(character);
+                        // only write CSV when we have to
+                        if (forceWrite || res.inserted > 0) {
+                            wait = analyzeCharacter(character);
+                        }
+
                         if (++i < total) {
-                            iterCrawl(i, ap);
+                            iterCrawl(i, wait);
                         } else {
-                            resolve(ap);
+                            cache.cold = false;
+                            resolve(wait);
                         }
                     });
 
                 }).catch(function(err) {
                     debug.error("["+(i+1)+"/"+total+"] MCRWL FAILED", character.name, err);
                     wait.then(function() {
-                        const ap = analyzeCharacter(character);
+                        wait = analyzeCharacter(character);
                         if (++i < total) {
-                            iterCrawl(i, ap);
+                            iterCrawl(i, wait);
                         } else {
-                            resolve(ap);
+                            resolve(wait);
                         }
                     });
                 });

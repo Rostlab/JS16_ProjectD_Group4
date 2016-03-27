@@ -1,9 +1,12 @@
 "use strict";
 
-const debug      = require('../core/debug')('crawler/cache', true),
-      Tweet      = require('../models/tweet');
+const debug = require('../core/debug')('crawler/cache', true),
+      Tweet = require('../models/tweet');
 
 var cache = module.exports = {};
+
+// has the crawler never completed before?
+cache.cold = true;
 
 // cache for the maxID for each character
 cache.maxID = [];
