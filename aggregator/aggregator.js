@@ -93,25 +93,24 @@ aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
         //const start = new Date();
 
-        Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
+        // data buckets
+        let year  = []; // day in year
+        let month = []; // hour in month
 
-            // data buckets
-            let year  = []; // day in year
-            let month = []; // hour in month
+        // current indices
+        let curYear, curMonth;
 
-            // current indices
-            let curYear, curMonth;
+        // aggregates
+        let pos = 0, neg = 0, total = 0;
 
-            // aggregates
-            let pos = 0, neg = 0, total = 0;
+        // output buffer for overall file
+        // We append here when saving the year bucket
+        let overall = csvHeader;
 
-            // output buffer for overall file
-            // We append here when saving the year bucket
-            let overall = csvHeader;
+        // Promises for sync
+        let ps = [];
 
-            // Promises for sync
-            let ps = [];
-
+        function aggregate(tweets) {
             for (var i = 0; i < tweets.length; i++) {
                 const tweet = tweets[i];
 
@@ -191,7 +190,9 @@ aggregator.analyzeCharacter = function(id, slug) {
                     }
                 }
             }
+        }
 
+        function save() {
             // save buckets
             if (year.length > 0) {
                 // we write one overal file instead of files per year
@@ -223,11 +224,20 @@ aggregator.analyzeCharacter = function(id, slug) {
                     updated:    Date.now()
                 }}
             ));
+        }
 
-            //const time = new Date().getTime() - start.getTime();
-            //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
+        const moreChunks = false;
+        Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
+            aggregate(tweets);
 
-            resolve(Promise.all(ps));
+            if (!moreChunks) {
+                save();
+
+                //const time = new Date().getTime() - start.getTime();
+                //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
+
+                resolve(Promise.all(ps));
+            }
         }).catch(reject);
     });
 };
