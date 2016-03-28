@@ -166,7 +166,7 @@ mobile.crawl = function(character, full) {
             get(url).then(function(res) {
                 // do more result pages exist?
                 var next = res.match(nextRe);
-                if (next || (++retries)*retryThreshold <= found) {
+                if (!!next || (++retries)*retryThreshold <= found) {
                     // next request url
                     if (next) {
                         url = searchURL + next[1];
@@ -177,10 +177,13 @@ mobile.crawl = function(character, full) {
                         url = searchURL + newQuery;
                     }
 
+                    // is this the first iteration?
+                    const first = (ids.length === 0);
+
                     ids = ids.concat(matchIDs(res));
 
                     // if we already have the maxID, then there are no new results.
-                    if (!full && found === 0 && ids.length > 0) {
+                    if (first && !full && ids.length > 0) {
                         // JavaScript is really really broken...
                         const maxID  = Math.max.apply(Math, ids);
                         const cached = cache.maxID[character.id];
@@ -199,6 +202,7 @@ mobile.crawl = function(character, full) {
                         wait.then(function(stats) {
                             var save = ids.splice(0,100);
 
+                            // not executed during the first save
                             if (stats !== null) {
                                 found    += stats.found;
                                 inserted += stats.inserted;
