@@ -1,11 +1,26 @@
 // function to parse string in the format 2006-01-02 to JavaScript's Date type
 var parseDate = d3.time.format("%Y-%m-%d").parse;
 
-function characterChart(svg, dataURL, episodesURL) {
+function characterChart(svg, dataURL) {
     var self = this;
+    var zoom = d3.behavior.zoom(); // Zooming behavior
     this.fullYdomain = [];
     this.fullXdomain = [];
-    this.zoom = null;
+    this.prefix = ""; // CSV Path Prefix
+    this.resize = render; // Resizing behaviour
+    this.episodeData = null;
+    this.ready = 0;
+
+    // Get CSV prefix
+    (function () {
+        var path = dataURL.split("/");
+        path.pop();
+        var s = "";
+        for (var p of path) {
+            s += p + "/";
+        }
+        self.prefix = s;
+    }());
 
     // set margin
     var margin = {
@@ -36,7 +51,7 @@ function characterChart(svg, dataURL, episodesURL) {
         yAxis = d3.svg.axis().scale(y).orient("left");
 
     // Seperate axis for episodes
-    var eAxis = d3.svg.axis().scale(x).orient("top");
+    var eAxis = d3.svg.axis().scale(x).orient("top").tickSize(0, 0);
 
     // TODO: Improve Multi-Scale Tick Format on time x-axis
     // Cheat sheet: https://github.com/mbostock/d3/wiki/Time-Formatting#format_iso
@@ -54,7 +69,7 @@ function characterChart(svg, dataURL, episodesURL) {
 
     // positive area between x-axis at y=0 and max(y)
     var calcAreaPos = d3.svg.area()
-        //.interpolate("monotone")
+        //.interpolate("step-before") // Fake bar chart yay! Alternatives: basis, cardinal
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -62,10 +77,13 @@ function characterChart(svg, dataURL, episodesURL) {
         }).y1(function (d) {
             return y(d.pos);
         });
+/*        .defined(function (d) {
+            return d.pos > 0;
+        });*/
 
     // negative area between x-axis at y=0 and min(y)
     var calcAreaNeg = d3.svg.area()
-        //.interpolate("monotone")
+        //.interpolate("step-before") // Fake bar chart yay! Alternatives: basis, cardinal
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -73,6 +91,9 @@ function characterChart(svg, dataURL, episodesURL) {
         }).y1(function (d) {
             return y(0);
         });
+/*        .defined(function (d) {
+            return d.neg < 0;
+        });*/
 
     // Outer container for the timeline
     var container = svg.append("g")
@@ -82,7 +103,7 @@ function characterChart(svg, dataURL, episodesURL) {
 
     // Create a background area
     var plot = svg.append("g");
-    plot.append("rect")
+    var background = plot.append("rect")
         .attr("id", "background")
         .attr("class", "react")
         .attr("width", getSize().width - 1)
@@ -94,17 +115,16 @@ function characterChart(svg, dataURL, episodesURL) {
 
     // create group for chart within svg
     var chart = plot.append("g")
-        .attr("class", "react")
-        .attr("clip-path", "url(#clip)");
+        .attr("class", "react");
 
-    // Define the visible area
-    chart.append("defs").append("clipPath")
+    // Define the visible area for the plot & eLabel (needs clip path because of customized tick values)
+    var clipper = container.append("defs").append("clipPath")
         .attr("id", "clip")
         .append("rect")
-        .attr("x", d3.select("#background").attr("x"))
-        .attr("y", d3.select("#background").attr("y"))
-        .attr("width", d3.select("#background").attr("width"))
-        .attr("height", d3.select("#background").attr("height"));
+        .attr("x", background.attr("x"))
+        .attr("y", background.attr("y") - margin.top) // for eLabel
+        .attr("width", background.attr("width"))
+        .attr("height", background.attr("height") + margin.top);
 
     // apply margin
     plot.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -117,7 +137,7 @@ function characterChart(svg, dataURL, episodesURL) {
     var xLabel = container.append("g").attr("class", "x axis")
         .attr("transform", "translate(0," + getSize().height + ")"),
         yLabel = container.append("g").attr("class", "y axis");
-    var eLabel = container.append("g").attr("class", "x axis");
+    var eLabel = container.append("g").attr("class", "x axis").attr("clip-path", "url(#clip)");
 
     function convertTwitterCSV(d) {
         // convert string data from CSV
@@ -131,11 +151,53 @@ function characterChart(svg, dataURL, episodesURL) {
     function convertEpisodesCSV(d) {
         // convert string data from CSV
         return {
-            date: parseDate(d.date.substring(0, 10)),
+            date: parseDate(d.date),
             code: d.code,
-            title: d.title
+            title: d.title,
+            seasonStartLabel: function () {
+                var arr = d.code.split("E");
+                if (parseInt(arr[1]) === 1) {
+                    return "Season " + (arr[0].split("S"))[1];
+                }
+                return "";
+            }()
         };
     }
+
+    // CURRENTLY BEING DEVELOPED: 
+/*    function assignDefaultValues(dataset) {        
+        var defaultValue = 0;
+        var newData = [];
+        var dateRange = d3.extent(dataset, function (d) {
+            return d.date;
+        });
+        var sortByDate = function (a, b) {
+            return a.date > b.date ? 1 : -1;
+        };
+        var stepdate = dateRange[0];
+
+        dataset.sort(sortByDate);
+
+        for (var i = 0; i < dataset.length; i++) {
+            if (dataset[i].date.valueOf() === stepdate.valueOf()) {                
+                stepdate.setDate(stepdate.getDate() + 1);   
+                console.log("Existing "+stepdate);
+            } else {                
+                while (dataset[i].date.valueOf() > stepdate.valueOf()) {
+                    console.log("MISSING");
+                    newData.push({
+                        date: stepdate,
+                        pos: 0,
+                        neg: 0
+                    });                    
+                    //console.log(dataset[i].date.valueOf()-stepdate.valueOf())
+                    stepdate.setDate(stepdate.getDate() + 1);
+                }
+            }                     
+        }
+
+        return dataset.concat(newData).sort(sortByDate);
+    }*/
 
     function fillChart(error, data) {
         // TODO: better error handling
@@ -143,6 +205,8 @@ function characterChart(svg, dataURL, episodesURL) {
             var up = error;
             throw up;
         }
+
+        //data = assignDefaultValues(data);
 
         // set domains (data)
         self.fullXdomain = d3.extent(data, function (d) {
@@ -171,20 +235,18 @@ function characterChart(svg, dataURL, episodesURL) {
 
         // Zoom Handling
         var currentDomain = x.domain()[1] - x.domain()[0],
-            minScale = currentDomain / (self.fullXdomain[1] - self.fullXdomain[0]),
-            maxScale = Infinity; // TODO: Set meaningful value.
+            minScale = currentDomain / (self.fullXdomain[1] - self.fullXdomain[0]), // All the available data
+            maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
 
-        self.zoom = d3.behavior.zoom()
-            .x(x)
+        zoom.x(x)
             // .xExtent(fullXdomain) Unfortunately not implemented in current d3js version :(
             .scaleExtent([minScale, maxScale])
             .on("zoom", zoomed);
-        d3.selectAll(".react").call(zoom);
-
-        render();
+        go();
     }
 
-    function episodeLabels(error, data) {
+    function handleEpisodes(error, data) {
+        self.episodeData = data;
         // TODO: better error handling
         if (!!error) {
             var up = error;
@@ -195,7 +257,7 @@ function characterChart(svg, dataURL, episodesURL) {
         plot.selectAll("bar")
             .data(data)
             .enter().append("rect")
-            .attr("class", "episode")
+            .attr("class", "episode react")
             .attr("clip-path", "url(#clip)")
             .attr("x", function (d) {
                 return x(d.date);
@@ -211,11 +273,10 @@ function characterChart(svg, dataURL, episodesURL) {
             }
             return a;
         });
-        eAxis.tickFormat(function (d, i) {
-            return data[i].code;
-        });
 
-        eLabel.call(eAxis);
+        eLabel.call(eAxis); // Has to be called once initially       
+
+        go();
     }
 
     function render() {
@@ -223,18 +284,20 @@ function characterChart(svg, dataURL, episodesURL) {
         var s = getSize();
         x.range([0, s.width]);
         y.range([s.height, 0]);
+        background.attr("width", s.width - 1);
+        clipper.attr("width", s.width - 1);
+        plot.attr("width", s.width - 1);
 
         recalc();
     }
 
     function zoomed() {
         // Workaround because .xExtent() for the zoom behaviour is not part of the current official d3js release
-        if (x.domain()[0] < fullXdomain[0]) {
-            zoom.translate([zoom.translate()[0] - x(fullXdomain[0]) + x.range()[0], 0]);
-        } else if (x.domain()[1] > fullXdomain[1]) {
-            zoom.translate([zoom.translate()[0] - x(fullXdomain[1]) + x.range()[1], 0]);
+        if (x.domain()[0] < self.fullXdomain[0]) {
+            zoom.translate([zoom.translate()[0] - x(self.fullXdomain[0]) + x.range()[0], 0]);
+        } else if (x.domain()[1] > self.fullXdomain[1]) {
+            zoom.translate([zoom.translate()[0] - x(self.fullXdomain[1]) + x.range()[1], 0]);
         }
-
         recalc();
     }
 
@@ -243,11 +306,7 @@ function characterChart(svg, dataURL, episodesURL) {
         pos.attr("d", calcAreaPos);
         neg.attr("d", calcAreaNeg);
 
-        // episode labels
-        d3.selectAll(".episode")
-            .attr("x", function (d) {
-                return x(d.date);
-            });
+        updateEpisodeLabels();
 
         // axis
         xLabel.call(xAxis);
@@ -255,13 +314,71 @@ function characterChart(svg, dataURL, episodesURL) {
         eLabel.call(eAxis);
     }
 
+    function updateEpisodeLabels() {
+        var dmn = x.domain()[1] - x.domain()[0]; // Current domain
+        var w = getSize().width;
+
+        // episode rectangles
+        var dayWidth = (86400000 / dmn) * w;
+        var szn =
+            d3.selectAll(".episode")
+            .attr("x", function (d) {
+                return x(d.date);
+            })
+            .attr("width", function (d) {
+                return dayWidth;
+            });
+
+        // Cheap Screen Size factor
+        var factor = 1;
+        if (w < 900) {
+            factor = 1 / 3;
+        } else if (w < 1400) {
+            factor = 2 / 3;
+        }
+
+        // Move the Labels into the center of the day 
+        eLabel.selectAll('.tick text')
+            .attr('transform', 'translate(' + dayWidth / 2 + ',0)');
+
+        // Custom Tick Format for the Episode Axis
+        if (dmn < (factor * 6 * 7 * 86400000)) { // < 6 Weeks * factor : Show Title            
+            eAxis.tickFormat(function (d, i) {
+                return self.episodeData[i].code + ': "' + self.episodeData[i].title + '"';
+            });
+        } else if (dmn < (factor * 6 * 30 * 86400000)) { // < 6 Months * factor: Show Code
+            eAxis.tickFormat(function (d, i) {
+                return self.episodeData[i].code;
+            });
+        } else if (dmn < (10 * 365 * 86400000)) { // < 10 Years * factor: Show season start
+            /* Move the Labels into the center of the season (avg a little over 2 months)
+            Won't work with the newest season during the time it's airing. Therefore commented out for now.
+            eLabel.selectAll('.tick text')
+                .attr('transform', 'translate(' + (dayWidth*64) / 2 + ',0)');*/
+            eAxis.tickFormat(function (d, i) {
+                return self.episodeData[i].seasonStartLabel;
+            });
+        } else { // Show nothing
+            eAxis.tickFormat("");
+        }
+    }
+
     // request csv twitter data and fill chart
     d3.csv(dataURL, convertTwitterCSV, fillChart);
 
     // request csv episodes data and create episode labels
-    d3.csv(episodesURL, convertEpisodesCSV, episodeLabels)
+    d3.csv("" + this.prefix + "episodes.csv", convertEpisodesCSV, handleEpisodes);
 
-    this.resize = render;
+    // Initial rendering when fillChart & handleEpisodes have finished (ready = 2)        
+    function go() {
+        self.ready++;
+        if (self.ready === 2) {
+            render();
+
+            // Add zoom handlers
+            d3.selectAll(".react").call(zoom);
+        }
+    }
 
     return this;
 }
