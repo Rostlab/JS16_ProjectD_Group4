@@ -93,120 +93,110 @@ aggregator.analyzeCharacter = function(id, slug) {
     return new Promise(function(resolve, reject) {
         //const start = new Date();
 
-        Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
+        // data buckets
+        let year  = []; // day in year
+        let month = []; // hour in month
 
-            // data buckets
-            let year  = []; // day in year
-            let month = []; // hour in month
+        // current indices
+        let curYear, curMonth;
 
-            // number of items in each bucket
-            let nYear = 0, nMonth = 0;
+        // aggregates
+        let pos = 0, neg = 0, total = 0;
 
-            // current indices
-            let curYear, curMonth;
+        // output buffer for overall file
+        // We append here when saving the year bucket
+        let overall = csvHeader;
 
-            // aggregates
-            let pos = 0, neg = 0, total = 0;
+        // Promises for sync
+        let ps = [];
 
-            // output buffer for overall file
-            // We append here when saving the year bucket
-            let overall = csvHeader;
+        function aggregate(tweet) {
+            // tweet date
+            const created = tweet.created;
 
-            // Promises for sync
-            let ps = [];
+            // year
+            const twtYear = created.getUTCFullYear();
 
-            for (var i = 0; i < tweets.length; i++) {
-                const tweet = tweets[i];
+            // month [0-11]
+            const twtMonth = created.getUTCMonth();
 
-                // tweet date
-                const created = tweet.created;
+            // day in year [0 - 371]
+            // our "year" has 12*31 days. it doesn't matter that not all of
+            // these dates actually exist.
+            const _twtDay = created.getUTCDate() - 1; // [0-30], shifted to 0
+            const twtDay = (twtMonth * 31) + _twtDay;
 
-                // year
-                const twtYear = created.getUTCFullYear();
+            // hour in month [0-731]
+            const _twtHour = created.getUTCHours(); // [0-23]
+            const twtHour = (_twtDay * 24) + _twtHour;
 
-                // month [0-11]
-                const twtMonth = created.getUTCMonth();
+            // figure out which buckets have to be emptied before we can
+            // process this tweet
+            if (curYear !== twtYear) {
+                if (year.length > 0) {
+                    // save buckets
 
-                // day in year [0 - 371]
-                // our "year" has 12*31 days. it doesn't matter that not all of
-                // these dates actually exist.
-                const _twtDay = created.getUTCDate() - 1; // [0-30], shifted to 0
-                const twtDay = (twtMonth * 31) + _twtDay;
+                    // we write one overal file instead of files per year
+                    overall += saveYear(slug, curYear, year);
 
-                // hour in month [0-731]
-                const _twtHour = created.getUTCHours(); // [0-23]
-                const twtHour = (_twtDay * 24) + _twtHour;
-
-                // figure out which buckets have to be emptied before we can
-                // process this tweet
-                if (curYear !== twtYear) {
-                    if (nYear > 0) {
-                        // save buckets
-
-                        // we write one overal file instead of files per year
-                        overall += saveYear(slug, curYear, year);
-
-                        if (nMonth > 0) {
-                            ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-                        }
-
-                        // reset buckets
-                        year  = [];
-                        month = [];
-                        nYear = nMonth = 0;
+                    if (month.length > 0) {
+                        ps.push(saveMonth(slug, curYear, curMonth, month));
                     }
 
-                    // update indices
-                    curYear   = twtYear;
-                    curMonth  = twtMonth;
-                } else if (curMonth !== twtMonth) {
-                    // save bucket
-                    if (nMonth > 0) {
-                        ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
-
-                        // reset bucket
-                        month  = [];
-                        nMonth = 0;
-                    }
-
-                    // update index
-                    curMonth  = twtMonth;
+                    // reset buckets
+                    year  = [];
+                    month = [];
                 }
 
-                // calculate sentiment for tweet
-                const sent = sentiment(tweet.text);
-                total++;
+                // update indices
+                curYear   = twtYear;
+                curMonth  = twtMonth;
 
-                if(sent !== 0) {
-                    nYear++;
-                    nMonth++;
+            } else if (curMonth !== twtMonth) {
+                // save bucket
+                if (month.length > 0) {
+                    ps.push(saveMonth(slug, curYear, curMonth, month));
 
-                    if(year.indexOf(twtDay) === -1) {
-                        year[twtDay] = [0, 0];
-                    }
-                    if(month.indexOf(twtHour) === -1) {
-                        month[twtHour] = [0, 0];
-                    }
-
-                    if (sent > 0) {
-                        pos++;
-                        year[twtDay][0]++;
-                        month[twtHour][0]++;
-                    } else if (sent < 0) {
-                        neg++;
-                        year[twtDay][1]++;
-                        month[twtHour][1]++;
-                    }
+                    // reset bucket
+                    month = [];
                 }
+
+                // update index
+                curMonth  = twtMonth;
             }
 
+            // calculate sentiment for tweet
+            const sent = sentiment(tweet.text);
+            total++;
+
+            if(sent !== 0) {
+                if(typeof year[twtDay] === 'undefined') {
+                    year[twtDay] = [0, 0];
+                }
+                if(typeof month[twtHour] === 'undefined') {
+                    month[twtHour] = [0, 0];
+                }
+
+                if (sent > 0) {
+                    pos++;
+                    year[twtDay][0]++;
+                    month[twtHour][0]++;
+                } else if (sent < 0) {
+                    neg++;
+                    year[twtDay][1]++;
+                    month[twtHour][1]++;
+                }
+            }
+        }
+
+        function save() {
             // save buckets
-            if (nYear > 0) {
+            if (year.length > 0) {
                 // we write one overal file instead of files per year
                 overall += saveYear(slug, curYear, year);
 
-                if (nMonth > 0) {
-                    ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                if (month.length > 0) {
+                    ps.push(saveMonth(slug, curYear, curMonth, month));
                 }
             }
 
@@ -232,10 +222,13 @@ aggregator.analyzeCharacter = function(id, slug) {
                 }}
             ));
 
-            //const time = new Date().getTime() - start.getTime();
-            //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
-
             resolve(Promise.all(ps));
-        }).catch(reject);
+        }
+
+        // stream tweets from DB and process stream
+        const stream = Tweet.find({ character: id }).sort({ created: 1 }).lean().stream();
+        stream.on('data', aggregate);
+        stream.on('error', reject);
+        stream.on('close', save);
     });
 };

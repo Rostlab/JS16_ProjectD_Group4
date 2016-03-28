@@ -7,6 +7,7 @@ const cfg       = require('../core/config'),
       Twit      = require('twit');
 
 var twitter = module.exports = {};
+var reconnectAttempts = 0;
 
 // init twitter API client
 var client;
@@ -216,12 +217,38 @@ twitter.crawlAll = function(full) {
 };
 
 twitter.streamTweets = function(query) {
-    client.stream('statuses/filter', {
-        track: query
-    }, function(stream) {
-        stream.on('data', twitter.saveTweet);
+    var output = '';
+    for (var i = 0; i < query.length; i++) {
+        output += query[i].name + ' , ';
+    }
+    output = "'" + output.substring(0, output.length - 2) + "'";
+    console.log("streaming...");
+    var stream = client.stream('statuses/filter', { track: output } );
 
-        // Handle errors
-        stream.on('error', debug.error);
+    stream.on('tweet', function(data) {
+        reconnectAttempts = 0;
+        var lcString = data.text.toLowerCase();
+        for (var i = 0; i < query.length; i++) {
+            var lcSearchString = query[i].name.toLowerCase();
+            var n = lcString.indexOf(lcSearchString);
+            if (n > -1) {
+                twitter.saveTweet(query[i]._id, data);
+            }
+        }
     });
+
+    stream.on('error', function(Message) {
+        if (Message.code !== 200) {
+            if (reconnectAttempts < 8) {
+                reconnectAttempts++;
+
+                setTimeout(function() {
+                    twitter.streamTweets(query);
+                }, (reconnectAttempts*reconnectAttempts)*60000);
+            }
+        }
+    });
+
+    // Handle errors
+    stream.on('error', debug.error);
 };
