@@ -99,9 +99,6 @@ aggregator.analyzeCharacter = function(id, slug) {
             let year  = []; // day in year
             let month = []; // hour in month
 
-            // number of items in each bucket
-            let nYear = 0, nMonth = 0;
-
             // current indices
             let curYear, curMonth;
 
@@ -140,20 +137,19 @@ aggregator.analyzeCharacter = function(id, slug) {
                 // figure out which buckets have to be emptied before we can
                 // process this tweet
                 if (curYear !== twtYear) {
-                    if (nYear > 0) {
+                    if (year.length > 0) {
                         // save buckets
 
                         // we write one overal file instead of files per year
                         overall += saveYear(slug, curYear, year);
 
-                        if (nMonth > 0) {
+                        if (month.length > 0) {
                             ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
                         }
 
                         // reset buckets
                         year  = [];
                         month = [];
-                        nYear = nMonth = 0;
                     }
 
                     // update indices
@@ -161,12 +157,11 @@ aggregator.analyzeCharacter = function(id, slug) {
                     curMonth  = twtMonth;
                 } else if (curMonth !== twtMonth) {
                     // save bucket
-                    if (nMonth > 0) {
+                    if (month.length > 0) {
                         ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
 
                         // reset bucket
-                        month  = [];
-                        nMonth = 0;
+                        month = [];
                     }
 
                     // update index
@@ -178,9 +173,6 @@ aggregator.analyzeCharacter = function(id, slug) {
                 total++;
 
                 if(sent !== 0) {
-                    nYear++;
-                    nMonth++;
-
                     if(typeof year[twtDay] === 'undefined') {
                         year[twtDay] = [0, 0];
                     }
@@ -201,11 +193,11 @@ aggregator.analyzeCharacter = function(id, slug) {
             }
 
             // save buckets
-            if (nYear > 0) {
+            if (year.length > 0) {
                 // we write one overal file instead of files per year
                 overall += saveYear(slug, curYear, year);
 
-                if (nMonth > 0) {
+                if (month.length > 0) {
                     ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
                 }
             }
