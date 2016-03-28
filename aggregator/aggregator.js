@@ -144,7 +144,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                         overall += saveYear(slug, curYear, year);
 
                         if (month.length > 0) {
-                            ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                            ps.push(saveMonth(slug, curYear, curMonth, month));
                         }
 
                         // reset buckets
@@ -158,7 +158,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                 } else if (curMonth !== twtMonth) {
                     // save bucket
                     if (month.length > 0) {
-                        ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                        ps.push(saveMonth(slug, curYear, curMonth, month));
 
                         // reset bucket
                         month = [];
@@ -198,7 +198,7 @@ aggregator.analyzeCharacter = function(id, slug) {
                 overall += saveYear(slug, curYear, year);
 
                 if (month.length > 0) {
-                    ps.push(saveMonth(slug, curYear, curMonth, month)[0]);
+                    ps.push(saveMonth(slug, curYear, curMonth, month));
                 }
             }
 
