@@ -110,84 +110,81 @@ aggregator.analyzeCharacter = function(id, slug) {
         // Promises for sync
         let ps = [];
 
-        function aggregate(tweets) {
-            for (var i = 0; i < tweets.length; i++) {
-                const tweet = tweets[i];
+        function aggregate(tweet) {
+            // tweet date
+            const created = tweet.created;
 
-                // tweet date
-                const created = tweet.created;
+            // year
+            const twtYear = created.getUTCFullYear();
 
-                // year
-                const twtYear = created.getUTCFullYear();
+            // month [0-11]
+            const twtMonth = created.getUTCMonth();
 
-                // month [0-11]
-                const twtMonth = created.getUTCMonth();
+            // day in year [0 - 371]
+            // our "year" has 12*31 days. it doesn't matter that not all of
+            // these dates actually exist.
+            const _twtDay = created.getUTCDate() - 1; // [0-30], shifted to 0
+            const twtDay = (twtMonth * 31) + _twtDay;
 
-                // day in year [0 - 371]
-                // our "year" has 12*31 days. it doesn't matter that not all of
-                // these dates actually exist.
-                const _twtDay = created.getUTCDate() - 1; // [0-30], shifted to 0
-                const twtDay = (twtMonth * 31) + _twtDay;
+            // hour in month [0-731]
+            const _twtHour = created.getUTCHours(); // [0-23]
+            const twtHour = (_twtDay * 24) + _twtHour;
 
-                // hour in month [0-731]
-                const _twtHour = created.getUTCHours(); // [0-23]
-                const twtHour = (_twtDay * 24) + _twtHour;
+            // figure out which buckets have to be emptied before we can
+            // process this tweet
+            if (curYear !== twtYear) {
+                if (year.length > 0) {
+                    // save buckets
 
-                // figure out which buckets have to be emptied before we can
-                // process this tweet
-                if (curYear !== twtYear) {
-                    if (year.length > 0) {
-                        // save buckets
+                    // we write one overal file instead of files per year
+                    overall += saveYear(slug, curYear, year);
 
-                        // we write one overal file instead of files per year
-                        overall += saveYear(slug, curYear, year);
-
-                        if (month.length > 0) {
-                            ps.push(saveMonth(slug, curYear, curMonth, month));
-                        }
-
-                        // reset buckets
-                        year  = [];
-                        month = [];
-                    }
-
-                    // update indices
-                    curYear   = twtYear;
-                    curMonth  = twtMonth;
-                } else if (curMonth !== twtMonth) {
-                    // save bucket
                     if (month.length > 0) {
                         ps.push(saveMonth(slug, curYear, curMonth, month));
-
-                        // reset bucket
-                        month = [];
                     }
 
-                    // update index
-                    curMonth  = twtMonth;
+                    // reset buckets
+                    year  = [];
+                    month = [];
                 }
 
-                // calculate sentiment for tweet
-                const sent = sentiment(tweet.text);
-                total++;
+                // update indices
+                curYear   = twtYear;
+                curMonth  = twtMonth;
 
-                if(sent !== 0) {
-                    if(typeof year[twtDay] === 'undefined') {
-                        year[twtDay] = [0, 0];
-                    }
-                    if(typeof month[twtHour] === 'undefined') {
-                        month[twtHour] = [0, 0];
-                    }
+            } else if (curMonth !== twtMonth) {
+                // save bucket
+                if (month.length > 0) {
+                    ps.push(saveMonth(slug, curYear, curMonth, month));
 
-                    if (sent > 0) {
-                        pos++;
-                        year[twtDay][0]++;
-                        month[twtHour][0]++;
-                    } else if (sent < 0) {
-                        neg++;
-                        year[twtDay][1]++;
-                        month[twtHour][1]++;
-                    }
+                    // reset bucket
+                    month = [];
+                }
+
+                // update index
+                curMonth  = twtMonth;
+            }
+
+            // calculate sentiment for tweet
+            const sent = sentiment(tweet.text);
+            total++;
+
+            if(sent !== 0) {
+                if(typeof year[twtDay] === 'undefined') {
+                    year[twtDay] = [0, 0];
+                }
+                if(typeof month[twtHour] === 'undefined') {
+                    month[twtHour] = [0, 0];
+                }
+
+                if (sent > 0) {
+                    pos++;
+                    year[twtDay][0]++;
+                    month[twtHour][0]++;
+                } else if (sent < 0) {
+                    neg++;
+                    year[twtDay][1]++;
+                    month[twtHour][1]++;
                 }
             }
         }
@@ -224,20 +221,14 @@ aggregator.analyzeCharacter = function(id, slug) {
                     updated:    Date.now()
                 }}
             ));
+
+            resolve(Promise.all(ps));
         }
 
-        const moreChunks = false;
-        Tweet.find({ character: id }).sort({ created: 1 }).then(function(tweets) {
-            aggregate(tweets);
-
-            if (!moreChunks) {
-                save();
-
-                //const time = new Date().getTime() - start.getTime();
-                //const stats = { "pos": pos, "neg": neg, "total": total, "time": time+"ms" };
-
-                resolve(Promise.all(ps));
-            }
-        }).catch(reject);
+        // stream tweets from DB and process stream
+        const stream = Tweet.find({ character: id }).sort({ created: 1 }).stream();
+        stream.on('data', aggregate);
+        stream.on('error', reject);
+        stream.on('close', save);
     });
 };
