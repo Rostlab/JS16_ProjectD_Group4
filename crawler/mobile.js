@@ -283,6 +283,17 @@ function analyzeCharacter(character) {
     });
 }
 
+function shuffleArray(array) {
+    let i = array.length;
+    while (--i) {
+        let j    = ~~(Math.random() * (i+1));
+        let tmp  = array[i];
+        array[i] = array[j];
+        array[j] = tmp;
+    }
+    return array;
+}
+
 // Returns Promise for sync
 mobile.crawlAll = function(full) {
     // we don't care when the cache is available - or if it is ever available
@@ -297,6 +308,9 @@ mobile.crawlAll = function(full) {
     // Crawl Twitter REST API for each Character in DB
     return Character.list().then(function(characters) {
         return new Promise(function(resolve, reject) {
+            // randomize crawl order... just in case.
+            characters = shuffleArray(characters);
+
             const total = characters.length;
             (function iterCrawl(i, wait) {
                 let character = characters[i];
