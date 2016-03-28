@@ -180,7 +180,7 @@ mobile.crawl = function(character, full) {
                     ids = ids.concat(matchIDs(res));
 
                     // if we already have the maxID, then there are no new results.
-                    if (!full && found === 0) {
+                    if (!full && found === 0 && ids.length > 0) {
                         // JavaScript is really really broken...
                         const maxID  = Math.max.apply(Math, ids);
                         const cached = cache.maxID[character.id];
