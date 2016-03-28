@@ -161,6 +161,21 @@ mobile.crawl = function(character, full) {
         let retries = 0;
         let lastDay = null;
 
+        // if we already have the maxID, then there are no new results
+        function tryCache() {
+            // JavaScript is really really broken...
+            const maxID  = Math.max.apply(Math, ids);
+            const cached = cache.maxID[character.id];
+
+            if (maxID === cached) {
+                resolve({found: found, inserted: inserted});
+                return true;
+            }
+
+            cache.maxID[character.id] = maxID;
+            return false;
+        }
+
         (function loop(wait) {
             // get mobile search result
             get(url).then(function(res) {
@@ -186,18 +201,9 @@ mobile.crawl = function(character, full) {
 
                     ids = ids.concat(matchIDs(res));
 
-                    // if we already have the maxID, then there are no new results.
-                    if (first && !full && ids.length > 0) {
-                        // JavaScript is really really broken...
-                        const maxID  = Math.max.apply(Math, ids);
-                        const cached = cache.maxID[character.id];
-
-                        if (maxID === cached) {
-                            resolve({found: found, inserted: inserted});
-                            return;
-                        } else {
-                            cache.maxID[character.id] = maxID;
-                        }
+                    // check if the cache first before saving
+                    if (first && !full && ids.length > 0 && tryCache()) {
+                        return true;
                     }
 
                     // make blocks of 100 IDs
@@ -231,7 +237,15 @@ mobile.crawl = function(character, full) {
 
                 // this is the last results page
                 } else if (res.match(doneRe)) {
+                    // is this the first iteration?
+                    const first = (ids.length === 0);
+
                     ids = ids.concat(matchIDs(res));
+
+                    // check if the cache first before saving
+                    if (first && !full && ids.length > 0 && tryCache()) {
+                        return true;
+                    }
 
                     if (ids.length === 0) {
                         resolve({found: found, inserted: inserted});
