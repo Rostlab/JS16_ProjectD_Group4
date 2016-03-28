@@ -175,6 +175,10 @@ mobile.crawl = function(character, full) {
                             new Date(lastDay).toISOString().slice(0,10) + '&s=sprv';
                         debug.log("History ended. Retry with new query: " + newQuery);
                         url = searchURL + newQuery;
+
+                        // set lastDay to previous day to avoid days with empty results
+                        const oneDay = 86400000;
+                        lastDay = new Date(new Date(lastDay).getTime() - oneDay);
                     }
 
                     // is this the first iteration?
