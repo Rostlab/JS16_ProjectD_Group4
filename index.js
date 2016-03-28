@@ -95,8 +95,8 @@ pkg.updateCharacter = function(id, full) {
                 aggregator.analyzeCharacter(id, character.slug).then(function() {
                     debug.log("Wrote CSVs for", character.name);
                     resolve();
-                }, function(err) {
-                    debug.err("FAILED to write CSVs for", character.name, err);
+                }).catch(function(err) {
+                    debug.error("FAILED to write CSVs for", character.name, err);
                     reject();
                 });
             }, reject);
