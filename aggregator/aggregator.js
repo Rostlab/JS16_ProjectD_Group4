@@ -226,7 +226,7 @@ aggregator.analyzeCharacter = function(id, slug) {
         }
 
         // stream tweets from DB and process stream
-        const stream = Tweet.find({ character: id }).sort({ created: 1 }).stream();
+        const stream = Tweet.find({ character: id }).sort({ created: 1 }).lean().stream();
         stream.on('data', aggregate);
         stream.on('error', reject);
         stream.on('close', save);
