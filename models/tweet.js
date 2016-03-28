@@ -22,7 +22,7 @@ const tweetSchema = new mongoose.Schema({
     lang: { type: String, default: "en" },
 
     // retweet count
-    retweetd: { type: Number, default: 0 },
+    retweeted: { type: Number, default: 0 },
 
     // favorite count
     favorited: { type: Number, default: 0 },
