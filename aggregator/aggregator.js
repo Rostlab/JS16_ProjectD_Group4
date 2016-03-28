@@ -181,10 +181,10 @@ aggregator.analyzeCharacter = function(id, slug) {
                     nYear++;
                     nMonth++;
 
-                    if(year.indexOf(twtDay) === -1) {
+                    if(typeof year[twtDay] !== 'undefined') {
                         year[twtDay] = [0, 0];
                     }
-                    if(month.indexOf(twtHour) === -1) {
+                    if(typeof month[twtHour] !== 'undefined') {
                         month[twtHour] = [0, 0];
                     }
 
