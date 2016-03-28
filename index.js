@@ -60,11 +60,11 @@ pkg.update = function(full) {
             debug.info("Characters updated", res);
 
             mobile.crawlAll(full).then(function(res) {
-                debug.info("Crawling completed", res);
+                debug.info("Crawling completed");
 
                 // make sure that the episodes update also completed (haha)
                 ep.then(function() {
-                    debug.info("UPDATE COMPLETE!");
+                    debug.info("Update complete!");
                     resolve(res);
                 }).catch(reject);
 
@@ -108,7 +108,6 @@ var run = false;
 var ploop = null; // not to be confused with 'poop'
 function loop() {
     ploop = pkg.update(false).then(function() {
-        debug.info("Finished incremental update");
         return scheduleUpdate();
     }).catch(function(err) {
         debug.error("FAILED update:", err);
@@ -122,7 +121,10 @@ function scheduleUpdate() {
         return null;
     }
     const wait = (+cfg.crawler.loopwait_s)*1000;
-    debug.info("Scheduling next incremental update at", new Date(new Date() + wait));
+    debug.info(
+        "Scheduling next incremental update at" +
+        new Date((new Date()).getTime() + wait).toString()
+    );
     return setTimeout(loop, wait);
 }
 
