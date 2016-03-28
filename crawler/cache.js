@@ -12,12 +12,6 @@ cache.cold = true;
 cache.maxID = [];
 
 cache.fill = function() {
-    if (cache.maxID.length > 0) {
-        // the crawler ran before.
-        // we trust our own values more than those in the DB.
-        return;
-    }
-
     // some of the uids are wrong since strcmp("9" > "11111")
     // we correct that at runtime :)
     Tweet.aggregate([
