@@ -122,7 +122,10 @@ function scheduleUpdate() {
         return null;
     }
     const wait = (+cfg.crawler.loopwait_s)*1000;
-    debug.info("Scheduling next incremental update at", new Date(new Date() + wait));
+    debug.info(
+        "Scheduling next incremental update at" +
+        new Date((new Date()).getTime() + wait).toString()
+    );
     return setTimeout(loop, wait);
 }
 
