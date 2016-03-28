@@ -28,7 +28,7 @@ const tweetSchema = new mongoose.Schema({
     favorited: { type: Number, default: 0 },
 
     // date when tweet was created
-    created: { type: Date, required: true }
+    created: { type: Date, required: true, index: true }
 });
 
 tweetSchema.index({character: 1, uid: 1}, {unique: true});

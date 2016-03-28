@@ -148,7 +148,7 @@ mobile.crawl = function(character, full) {
 
     // Number of Tweets after which retry with another "until:(lastDay)" query
     // when the history ends. For some popular characters the history ends early.
-    const retryThreshold = 5000;
+    const retryThreshold = 3000;
 
     return new Promise(function(resolve, reject) {
         // relaxed search
@@ -158,41 +158,52 @@ mobile.crawl = function(character, full) {
         let url = searchURL + '"' + character.name + '"&s=sprv';
         let ids = [];
         let found = 0, inserted = 0;
-        let retried = false;
+        let retries = 0;
         let lastDay = null;
+
+        // if we already have the maxID, then there are no new results
+        function tryCache() {
+            // JavaScript is really really broken...
+            const maxID  = Math.max.apply(Math, ids);
+            const cached = cache.maxID[character.id];
+
+            if (maxID === cached) {
+                resolve({found: found, inserted: inserted});
+                return true;
+            }
+
+            cache.maxID[character.id] = maxID;
+            return false;
+        }
 
         (function loop(wait) {
             // get mobile search result
             get(url).then(function(res) {
                 // do more result pages exist?
                 var next = res.match(nextRe);
-                if (next || (!retried && found >= retryThreshold)) {
+                if (!!next || (++retries)*retryThreshold <= found) {
                     // next request url
                     if (next) {
-                        retried = false;
                         url = searchURL + next[1];
                     } else {
-                        retried = true;
                         const newQuery = '"' + character.name + '" until:' +
                             new Date(lastDay).toISOString().slice(0,10) + '&s=sprv';
                         debug.log("History ended. Retry with new query: " + newQuery);
                         url = searchURL + newQuery;
+
+                        // set lastDay to previous day to avoid days with empty results
+                        const oneDay = 86400000;
+                        lastDay = new Date(new Date(lastDay).getTime() - oneDay);
                     }
+
+                    // is this the first iteration?
+                    const first = (ids.length === 0);
 
                     ids = ids.concat(matchIDs(res));
 
-                    // if we already have the maxID, then there are no new results.
-                    if (!full && found === 0) {
-                        // JavaScript is really really broken...
-                        const maxID  = Math.max.apply(Math, ids);
-                        const cached = cache.maxID[character.id];
-
-                        if (maxID === cached) {
-                            resolve({found: found, inserted: inserted});
-                            return;
-                        } else {
-                            cache.maxID[character.id] = maxID;
-                        }
+                    // check if the cache first before saving
+                    if (first && !full && ids.length > 0 && tryCache()) {
+                        return true;
                     }
 
                     // make blocks of 100 IDs
@@ -201,6 +212,7 @@ mobile.crawl = function(character, full) {
                         wait.then(function(stats) {
                             var save = ids.splice(0,100);
 
+                            // not executed during the first save
                             if (stats !== null) {
                                 found    += stats.found;
                                 inserted += stats.inserted;
@@ -225,7 +237,15 @@ mobile.crawl = function(character, full) {
 
                 // this is the last results page
                 } else if (res.match(doneRe)) {
+                    // is this the first iteration?
+                    const first = (ids.length === 0);
+
                     ids = ids.concat(matchIDs(res));
+
+                    // check if the cache first before saving
+                    if (first && !full && ids.length > 0 && tryCache()) {
+                        return true;
+                    }
 
                     if (ids.length === 0) {
                         resolve({found: found, inserted: inserted});
