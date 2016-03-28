@@ -148,7 +148,7 @@ mobile.crawl = function(character, full) {
 
     // Number of Tweets after which retry with another "until:(lastDay)" query
     // when the history ends. For some popular characters the history ends early.
-    const retryThreshold = 5000;
+    const retryThreshold = 3000;
 
     return new Promise(function(resolve, reject) {
         // relaxed search
@@ -158,7 +158,7 @@ mobile.crawl = function(character, full) {
         let url = searchURL + '"' + character.name + '"&s=sprv';
         let ids = [];
         let found = 0, inserted = 0;
-        let retried = false;
+        let retries = 0;
         let lastDay = null;
 
         (function loop(wait) {
@@ -166,13 +166,11 @@ mobile.crawl = function(character, full) {
             get(url).then(function(res) {
                 // do more result pages exist?
                 var next = res.match(nextRe);
-                if (next || (!retried && found >= retryThreshold)) {
+                if (next || (++retries)*retryThreshold <= found) {
                     // next request url
                     if (next) {
-                        retried = false;
                         url = searchURL + next[1];
                     } else {
-                        retried = true;
                         const newQuery = '"' + character.name + '" until:' +
                             new Date(lastDay).toISOString().slice(0,10) + '&s=sprv';
                         debug.log("History ended. Retry with new query: " + newQuery);
