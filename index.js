@@ -220,14 +220,16 @@ pkg.mostDiscussed = function(n) {
     return Character.find().sort({heat:-1}).limit(n).exec();
 };
 
-pkg.startStream = function(n) {
+// currently unexported
+function startStream(n) {
     if(n === undefined) {
         n = 200;
     }
     pkg.mostDiscussed(n).then(function(res) {
         twitter.streamTweets(res);
     });
-};
+}
+
 /**
  * Absolute path to the Chart CSS file.
  * It should be served with e.g. express' sendFile.
