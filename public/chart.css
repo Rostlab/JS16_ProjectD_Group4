@@ -21,3 +21,7 @@
     cursor: move;
     pointer-events: all;
 }
+.episode {
+    fill: grey;
+    opacity: 0.2;
+}
