@@ -4,7 +4,7 @@
     },
     "api": {
         "https": true,
-        "host": "got-api.bruck.me",
+        "host": "api.got.show",
         "prefix": "/api/"
     },
     "twitter": {
