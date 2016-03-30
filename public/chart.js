@@ -6,21 +6,20 @@ function characterChart(svg, dataURL) {
     var zoom = d3.behavior.zoom(); // Zooming behavior
     this.fullYdomain = [];
     this.fullXdomain = [];
-    this.prefix = ""; // CSV Path Prefix
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
     this.ready = 0;
 
-    // Get CSV prefix
-    (function () {
+    // Get CSV prefix (HELPER Function)
+    function getPrefix() {
         var path = dataURL.split("/");
         path.pop();
         var s = "";
         for (var p of path) {
             s += p + "/";
         }
-        self.prefix = s;
-    }());
+        return s;
+    }
 
     // set margin
     var margin = {
@@ -69,7 +68,7 @@ function characterChart(svg, dataURL) {
 
     // positive area between x-axis at y=0 and max(y)
     var calcAreaPos = d3.svg.area()
-        //.interpolate("step-before") // Fake bar chart yay! Alternatives: basis, cardinal
+        //.interpolate("monotone") // Fake bar chart: step-before, smooth curve: monotone
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -77,13 +76,13 @@ function characterChart(svg, dataURL) {
         }).y1(function (d) {
             return y(d.pos);
         });
-/*        .defined(function (d) {
-            return d.pos > 0;
-        });*/
+    /*        .defined(function (d) {
+                return d.pos > 0;
+            });*/
 
     // negative area between x-axis at y=0 and min(y)
     var calcAreaNeg = d3.svg.area()
-        //.interpolate("step-before") // Fake bar chart yay! Alternatives: basis, cardinal
+        //.interpolate("monotone") // Fake bar chart: step-before, smooth curve: monotone
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -91,9 +90,9 @@ function characterChart(svg, dataURL) {
         }).y1(function (d) {
             return y(0);
         });
-/*        .defined(function (d) {
-            return d.neg < 0;
-        });*/
+    /*        .defined(function (d) {
+                return d.pos > 0;
+            });*/
 
     // Outer container for the timeline
     var container = svg.append("g")
@@ -165,39 +164,36 @@ function characterChart(svg, dataURL) {
     }
 
     // CURRENTLY BEING DEVELOPED: 
-/*    function assignDefaultValues(dataset) {        
-        var defaultValue = 0;
+    function assignDefaultValues(error, data) {
         var newData = [];
-        var dateRange = d3.extent(dataset, function (d) {
+        var dateRange = d3.extent(data, function (d) {
             return d.date;
         });
         var sortByDate = function (a, b) {
             return a.date > b.date ? 1 : -1;
         };
-        var stepdate = dateRange[0];
+        var stepdate = new Date(dateRange[0]);
 
-        dataset.sort(sortByDate);
+        data.sort(sortByDate);
 
-        for (var i = 0; i < dataset.length; i++) {
-            if (dataset[i].date.valueOf() === stepdate.valueOf()) {                
-                stepdate.setDate(stepdate.getDate() + 1);   
-                console.log("Existing "+stepdate);
-            } else {                
-                while (dataset[i].date.valueOf() > stepdate.valueOf()) {
-                    console.log("MISSING");
+        for (var i = 0; i < data.length;) {
+            if ((data[i].date - stepdate) === 0) {
+                stepdate.setDate(stepdate.getDate() + 1);
+                i++;
+            } else {
+                while (data[i].date.valueOf() !== stepdate.valueOf()) {
                     newData.push({
-                        date: stepdate,
+                        date: new Date(stepdate), // Screw closures!
                         pos: 0,
                         neg: 0
-                    });                    
-                    //console.log(dataset[i].date.valueOf()-stepdate.valueOf())
+                    });
                     stepdate.setDate(stepdate.getDate() + 1);
                 }
-            }                     
+            }
         }
 
-        return dataset.concat(newData).sort(sortByDate);
-    }*/
+        fillChart(error, data.concat(newData).sort(sortByDate));
+    }
 
     function fillChart(error, data) {
         // TODO: better error handling
@@ -206,12 +202,11 @@ function characterChart(svg, dataURL) {
             throw up;
         }
 
-        //data = assignDefaultValues(data);
-
         // set domains (data)
         self.fullXdomain = d3.extent(data, function (d) {
             return d.date;
         });
+
         // Show all the available data.         
         x.domain(self.fullXdomain);
 
@@ -364,10 +359,10 @@ function characterChart(svg, dataURL) {
     }
 
     // request csv twitter data and fill chart
-    d3.csv(dataURL, convertTwitterCSV, fillChart);
+    d3.csv(dataURL, convertTwitterCSV, assignDefaultValues);
 
     // request csv episodes data and create episode labels
-    d3.csv("" + this.prefix + "episodes.csv", convertEpisodesCSV, handleEpisodes);
+    d3.csv("" + getPrefix() + "episodes.csv", convertEpisodesCSV, handleEpisodes);
 
     // Initial rendering when fillChart & handleEpisodes have finished (ready = 2)        
     function go() {
