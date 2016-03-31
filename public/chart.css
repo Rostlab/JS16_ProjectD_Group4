@@ -10,6 +10,11 @@
 .background {
     fill: #313131;
 }
+.error {
+    font: 20px sans-serif;
+    color: #f5f5f5;
+    background-color: #313131;
+}
 .trendline {
     fill: none;
     stroke: none;

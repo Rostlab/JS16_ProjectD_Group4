@@ -8,7 +8,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     this.fullYdomain = [];
     this.fullXdomain = []; // Range of available data
     this.xDomainBounds = []; // Range of shown data
-    this.resize = render; // Resizing behaviour
+    this.resize = null; // Resizing behaviour
     this.episodeData = null;
     this.ready = 0;
     // startDate & endDate are optional parameters. Default values will be overwritten later.
@@ -179,6 +179,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Fills in missing csv data
     function assignDefaultValues(error, data) {
+        if (!!error) {
+            errorMessage();
+            return;
+        }
         var newData = [];
         var dateRange = d3.extent(data, function (d) {
             return d.date;
@@ -205,16 +209,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
             }
         }
 
-        fillChart(error, data.concat(newData).sort(sortByDate));
+        fillChart(data.concat(newData).sort(sortByDate));
     }
 
-    function fillChart(error, data) {
-        // TODO: better error handling
-        if (!!error) {
-            var up = error;
-            throw up;
-        }
-
+    function fillChart(data) {
         // fullXdomain: Range of available data
         self.fullXdomain = d3.extent(data, function (d) {
             return d.date;
@@ -262,12 +260,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
     }
 
     function handleEpisodes(error, data) {
-        self.episodeData = data;
-        // TODO: better error handling
         if (!!error) {
-            var up = error;
-            throw up;
+            errorMessage();
+            return;
         }
+        self.episodeData = data;
 
         // Create episode "lines" in graph
         plot.selectAll("bar")
@@ -394,7 +391,22 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
             // Add zoom handlers
             d3.selectAll(".react").call(zoom);
+
+            // Resizing behavior
+            this.resize = render;
         }
+    }
+
+    // Error Message (in case of non-existent csv data)
+    function errorMessage() {
+        plot.append("foreignObject")
+            .attr("width", getSize().width - 20)
+            .attr("height", getSize().height - 10)
+            .attr("x", 20)
+            .attr("y", 10)
+            .append("xhtml:div")
+            .text("There seem to be no relevant tweets on this  character. Sorry.")
+            .attr("class", "error");
     }
 
     return this;
