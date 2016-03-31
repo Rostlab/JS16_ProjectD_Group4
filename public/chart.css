@@ -1,14 +1,26 @@
-.area {
-    clip-path: url(#clip);
-}
 .area.pos {
     fill: #90BB5E;
+    fill: #6aaa1f;
 }
 .area.neg {
-    fill: #EF6944;
+    fill: #5A180D;
+    fill: #6f1f12;
+    fill: #c63d17;
+}
+.background {
+    fill: #313131;
+}
+.trendline {
+    fill: none;
+    stroke: none;
+    /*#4479ef;*/
+    shape-rendering: crispEdges;
+    "vector-effect": non-scaling-stroke;
+    stroke-width: 1px;
 }
 .axis {
-    font: 10px sans-serif;
+    font: 12px sans-serif;
+    fill: #f5f5f5;
 }
 .axis path,
 .axis line {
@@ -17,11 +29,14 @@
     shape-rendering: crispEdges;
     "vector-effect": non-scaling-stroke;
 }
+.tick > line {
+    stroke: #f5f5f5;
+}
 .react {
     cursor: move;
     pointer-events: all;
 }
 .episode {
-    fill: grey;
-    opacity: 0.2;
+    fill: #f5f5f5;
+    opacity: 0.25;
 }
