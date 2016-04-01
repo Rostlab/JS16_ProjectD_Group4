@@ -272,7 +272,8 @@ pkg.stats = function() {
             resolve({
                 total:    result.total,
                 positive: result.positive,
-                negative: result.negative
+                negative: result.negative,
+                lang:     aggregator.lang
             });
         });
     });

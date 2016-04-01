@@ -10,6 +10,8 @@ const cfg       = require('../core/config'),
 
 var aggregator = module.exports = {};
 
+aggregator.lang = [];
+
 // write data string to file
 // creates parent dir if necessary
 function writeFile(dir, file, data) {
@@ -112,6 +114,13 @@ aggregator.analyzeCharacter = function(id, slug) {
 
         function aggregate(tweet) {
             total++;
+
+            // language stats
+            if(typeof aggregator.lang[tweet.lang] === 'undefined') {
+                aggregator.lang[tweet.lang] = 1;
+            } else {
+                aggregator.lang[tweet.lang]++;
+            }
 
             // Skip non-English tweets
             if(tweet.lang !== "en") {
