@@ -152,6 +152,53 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("x", 20)
         .attr("y", 10);
 
+    // add about field
+    var aboutMsg = container.append("g")
+        .attr("clip-path", "url(#clip)")
+        .append("g")
+        .attr("class", "aboutmsg invisible")
+        .attr("transform", "translate(70,10)");
+
+    // Adding about field elements the old fashioned way
+    {
+        aboutMsg.append("rect")
+            .attr("width", 160)
+            .attr("height", 95);
+
+        aboutMsg.append("circle")
+            .attr("cx", 12)
+            .attr("cy", 12)
+            .attr("r", 6)
+            .attr("class", "area pos");
+
+        aboutMsg.append("circle")
+            .attr("cx", 12)
+            .attr("cy", 30)
+            .attr("r", 6)
+            .attr("class", "area neg");
+
+        aboutMsg.append("circle")
+            .attr("cx", 12)
+            .attr("cy", 48)
+            .attr("r", 6)
+            .attr("fill", "#f5f5f5")
+            .attr("fill-opacity", 0.8);
+
+        aboutMsg.append("text")
+            .attr("transform", "translate(24,18)")
+            .text("Positive score");
+        aboutMsg.append("text")
+            .attr("transform", "translate(24,36)")
+            .text("Negative score");
+        aboutMsg.append("text")
+            .attr("transform", "translate(24,54)")
+            .text("Accumulated trend");
+        aboutMsg.append("text")
+            .attr("transform", "translate(6,80)")
+            .attr("font-style", "italic")
+            .text("Optimized for Chrome");
+    }
+
     // add scroll bar
     var scrollbar = container.append("rect")
         .attr("class", "scrollbar")
@@ -184,14 +231,12 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var trendButton = container.append("g")
         .attr("transform", "translate(10, " + (getSize().height - 30) + ")")
         .attr("class", "trendbutton");
-    trendButton.append("rect")
-        .attr("width", 143)
-        .attr("height", 20);
-    trendButton.append("text")
-        .attr("x", 4)
-        .attr("y", 15)
-        .text("Show accumulated trend");
-    
+
+    // add About-Button
+    var aboutButton = container.append("g")
+        .attr("transform", "translate(10, " + 10 + ")")
+        .attr("class", "trendbutton");
+
     function convertTwitterCSV(d) {
         // convert string data from CSV
         return {
@@ -276,9 +321,9 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         // y from min(neg) to max(pos)
         y.domain([d3.min(data, function (d) {
-            return Math.min(-5, d.neg * 1.05); // I like my headroom. Minimum domain = [-5;+5], always at least 5% headroom
+            return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
         }), d3.max(data, function (d) {
-            return Math.max(5, d.pos * 1.05);
+            return Math.max(5.5, d.pos * 1.05);
         })]);
         //y.nice();
         self.fullYdomain = y.domain();
@@ -440,6 +485,21 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (self.ready === 2) {
             // Not needed in case of error
             y0line.attr("stroke-width", 0.5);
+            trendButton.append("rect")
+                .attr("width", 95)
+                .attr("height", 20);
+            trendButton.append("text")
+                .attr("x", 4)
+                .attr("y", 15)
+                .text("Toggle trendline");
+            aboutButton.append("rect")
+                .attr("width", 48)
+                .attr("height", 20);
+            aboutButton.append("text")
+                .attr("x", 4)
+                .attr("y", 15)
+                .attr("class", "about")
+                .text("About");
 
             render();
 
@@ -459,14 +519,25 @@ function characterChart(svg, dataURL, startDate, endDate) {
             d3.selectAll(".react").call(zoom);
             scrollknob.call(drag);
             trendButton.on("click", toggleTrend);
-            trendButton.on("mouseenter", function(){trendButton.attr("class", "trendbutton fullOpac");});
-            trendButton.on("mouseleave", function(){trendButton.attr("class", "trendbutton");});
+            trendButton.on("mouseenter", function () {
+                trendButton.attr("class", "trendbutton fullOpac");
+            });
+            trendButton.on("mouseleave", function () {
+                trendButton.attr("class", "trendbutton");
+            });
+            aboutButton.on("click", toggleAbout);
+            aboutButton.on("mouseenter", function () {
+                aboutButton.attr("class", "trendbutton fullOpac");
+            });
+            aboutButton.on("mouseleave", function () {
+                aboutButton.attr("class", "trendbutton");
+            });
         }
     }
-    
-    function toggleTrend(){
-        if(trendline.attr("class") === "trendline"){
-            trendline.attr("class",  "trendline noshow");
+
+    function toggleTrend() {
+        if (trendline.attr("class") === "trendline") {
+            trendline.attr("class", "trendline noshow");
             chart.attr("class", "react");
         } else {
             trendline.attr("class", "trendline");
@@ -474,11 +545,30 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
     }
 
+    function toggleAbout() {
+        if (aboutMsg.attr("class") !== "aboutmsg fullOpac") {
+            aboutMsg.attr("class", "aboutmsg fullOpac");
+        } else {
+            aboutMsg.attr("class", "aboutmsg invisible");
+        }
+    }
+
     // Error Message (in case of non-existent csv data)
     function errorMessage() {
-        errMsg.append("xhtml:div")
-            .text("There seem to be no relevant tweets on this  character. Sorry.")
-            .attr("class", "error");
+        // Checks foreignObject Support
+        if (document.implementation.hasFeature("www.http://w3.org/TR/SVG11/feature#Extensibility", "1.1")) {
+            errMsg.append("xhtml:div")
+                .text("There seem to be no relevant tweets about this character. Sorry.")
+                .attr("class", "error");
+        } else {
+            // Adds non-resizable Error-Message for IE users. Might break svg boundaries when width is too small.
+            plot.append("text")
+                .attr("class", "error noaction")
+                .attr("x", 20)
+                .attr("y", 30)
+                .attr("clip-path", "url(#clip)")
+                .text("No relevant tweets about this character.");
+        }
     }
 
     return this;

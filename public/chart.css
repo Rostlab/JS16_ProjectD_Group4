@@ -1,20 +1,15 @@
 .area.pos {
-    /*fill: #90BB5E;*/
     fill: #6aaa1f;
 }
 .area.neg {
-    /*fill: #5A180D;
-    fill: #6f1f12;*/
     fill: #c63d17;
-}
-.lowOpac {
-    fill-opacity: 0.5;
 }
 .background {
     fill: #313131;
 }
 .error {
     font: 20px sans-serif;
+    fill: #f5f5f5;
     color: #f5f5f5;
     background-color: #313131;
 }
@@ -23,15 +18,12 @@
     cursor: pointer;
     opacity: 0.3;
 }
-.fullOpac {
-    opacity: 1;
-}
-.trendbutton > rect {
+.trendbutton rect {
     fill: #1f1f1f;
     stroke: #f5f5f5;
     stroke-width: 1px;
 }
-.trendbutton > text {
+.trendbutton text {
     font: 12px sans-serif;
     fill: #f5f5f5;
     /* Prevent selection */
@@ -42,11 +34,23 @@
     -ms-user-select: none;
     user-select: none;
 }
+.trendbutton .about {
+    font: 15px sans-serif;
+}
+.aboutmsg {
+    pointer-events: none;
+    fill: #f5f5f5;  
+    font: 14px sans-serif;
+}
+.aboutmsg rect {
+    fill: #313131;
+    stroke: #000;
+    stroke-width: 2px;
+}
 .trendline {
     fill: none;
     stroke: #f5f5f5;
     stroke-opacity: 0.8;
-    /*#4479ef;*/
     shape-rendering: crispEdges;
     "vector-effect": non-scaling-stroke;
     stroke-width: 2px;
@@ -60,8 +64,6 @@
 }
 .scrollknob {
     fill: #f5f5f5;
-    /*fill: #5A180D;
-    fill: #1128d9;*/
     fill-opacity: 0.4;
     stroke: #000;
     stroke-width: 2px;
@@ -95,4 +97,13 @@
 }
 .noaction {
     pointer-events: none;
+}
+.invisible {
+    opacity: 0;
+}
+.lowOpac {
+    fill-opacity: 0.5;
+}
+.fullOpac {
+    opacity: 1;
 }
