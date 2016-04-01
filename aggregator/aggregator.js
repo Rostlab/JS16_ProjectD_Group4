@@ -111,6 +111,20 @@ aggregator.analyzeCharacter = function(id, slug) {
         let ps = [];
 
         function aggregate(tweet) {
+            total++;
+
+            // Skip non-English tweets
+            if(tweet.lang !== "en") {
+                return;
+            }
+
+            // calculate sentiment for tweet
+            const sent = sentiment(tweet.text);
+
+            if(sent === 0) {
+                return;
+            }
+
             // tweet date
             const created = tweet.created;
 
@@ -165,27 +179,21 @@ aggregator.analyzeCharacter = function(id, slug) {
                 curMonth  = twtMonth;
             }
 
-            // calculate sentiment for tweet
-            const sent = sentiment(tweet.text);
-            total++;
+            if(typeof year[twtDay] === 'undefined') {
+                year[twtDay] = [0, 0];
+            }
+            if(typeof month[twtHour] === 'undefined') {
+                month[twtHour] = [0, 0];
+            }
 
-            if(sent !== 0) {
-                if(typeof year[twtDay] === 'undefined') {
-                    year[twtDay] = [0, 0];
-                }
-                if(typeof month[twtHour] === 'undefined') {
-                    month[twtHour] = [0, 0];
-                }
-
-                if (sent > 0) {
-                    pos++;
-                    year[twtDay][0]++;
-                    month[twtHour][0]++;
-                } else if (sent < 0) {
-                    neg++;
-                    year[twtDay][1]++;
-                    month[twtHour][1]++;
-                }
+            if (sent > 0) {
+                pos++;
+                year[twtDay][0]++;
+                month[twtHour][0]++;
+            } else if (sent < 0) {
+                neg++;
+                year[twtDay][1]++;
+                month[twtHour][1]++;
             }
         }
 
