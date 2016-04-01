@@ -346,7 +346,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
 
         // Ugly but necessary for now to prevent resizing errors when there's no csv
-        if (self.ready == 2) {
+        if (self.ready === 2) {
             recalc();
         }
     }
