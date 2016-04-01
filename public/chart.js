@@ -4,11 +4,12 @@ var parseDate = d3.time.format("%Y-%m-%d").parse;
 // returns the characterChart
 function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
-    var zoom = d3.behavior.zoom(); // Zooming behavior
+    var zoom = d3.behavior.zoom(); // plot zooming behavior
+    var drag = d3.behavior.drag(); // drag behavior scrollbar
     this.fullYdomain = [];
     this.fullXdomain = []; // Range of available data
-    this.xDomainBounds = []; // Range of shown data
-    this.resize = null; // Resizing behaviour
+    this.xDomainBounds = []; // Range of shown data    
+    this.resize = render; // Resizing behaviour
     this.episodeData = null;
     this.ready = 0;
     // startDate & endDate are optional parameters. Default values will be overwritten later.
@@ -30,7 +31,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var margin = {
         top: 30,
         right: 20,
-        bottom: 30,
+        bottom: 100,
         left: 50
     };
 
@@ -66,6 +67,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Seperate axis for episodes
     var eAxis = d3.svg.axis().scale(x).orient("top").tickSize(0, 0);
+
+    // Seperate "scroll" axis for full domain
+    var scrollScale = d3.time.scale().range([0, getSize().width]);
+    var scrollAxis = d3.svg.axis().scale(scrollScale).outerTickSize(0).orient("bottom");
 
     // positive area between x-axis at y=0 and max(y)
     var calcAreaPos = d3.svg.area()
@@ -140,16 +145,40 @@ function characterChart(svg, dataURL, startDate, endDate) {
     // add trendline
     var trendline = chart.append("path").attr("class", "trendline");
 
+    // add error field
+    var errMsg = plot.append("foreignObject")
+        .attr("class", "noaction")
+        .attr("width", getSize().width - 20)
+        .attr("height", getSize().height - 10)
+        .attr("x", 20)
+        .attr("y", 10);
+
+    // add scroll bar
+    var scrollbar = container.append("rect")
+        .attr("class", "scrollbar")
+        .attr("x", -10)
+        .attr("y", getSize().height + 40)
+        .attr("width", getSize().width)
+        .attr("height", 6)
+        .attr("rx", 10);
+    var scrollknob = container.append("rect")
+        .attr("class", "scrollknob")
+        .attr("y", getSize().height + 38)
+        .attr("height", 10);
+
     // add axis label elements
     var xLabel = container.append("g").attr("class", "x axis")
         .attr("transform", "translate(0," + (getSize().height) + ")"),
         yLabel = container.append("g").attr("class", "y axis");
     var eLabel = container.append("g").attr("class", "x axis").attr("clip-path", "url(#clip)");
+    var scrollLabel = container.append("g").attr("class", "scroll axis")
+        .attr("transform", "translate(0," + (getSize().height + 50) + ")");
 
     // add right border
     var rightBorder = container.append("rect")
         .attr("x", getSize().width)
         .attr("height", getSize().height)
+        .attr("width", 1)
         .style("fill", "#000");
 
     function convertTwitterCSV(d) {
@@ -201,8 +230,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                     newData.push({
                         date: new Date(stepdate), // Screw closures!
                         pos: 0,
-                        neg: 0,
-                        avg: 0
+                        neg: 0
                     });
                     stepdate.setDate(stepdate.getDate() + 1);
                 }
@@ -233,6 +261,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
             self.endDate = self.xDomainBounds[1];
         }
         x.domain([self.startDate, self.endDate]);
+        scrollScale.domain(self.xDomainBounds);
 
         // y from min(neg) to max(pos)
         y.domain([d3.min(data, function (d) {
@@ -248,14 +277,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
         neg.datum(data);
         trendline.datum(data);
 
-        // Zoom Handling
-        var currentDomain = x.domain()[1] - x.domain()[0],
-            minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
-            maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
-
-        zoom.x(x)
-            .scaleExtent([minScale, maxScale])
-            .on("zoom", zoomed);
         go();
     }
 
@@ -287,7 +308,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
     }
 
     function zoomed() {
-        // Workaround because .xExtent() for the zoom behaviour is not part of the current official d3js release
         if (x.domain()[0] < self.xDomainBounds[0]) {
             zoom.translate([zoom.translate()[0] - x(self.xDomainBounds[0]) + x.range()[0], 0]);
         } else if (x.domain()[1] > self.xDomainBounds[1]) {
@@ -295,12 +315,18 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         recalc();
     }
+    
+    function dragged(){        
+        zoom.translate([zoom.translate()[0]-d3.event.dx, 0]);
+        zoomed();
+    }
 
-    // Operations which are needed for drawing & resizing the graph (not for zooming)
+    // Operations which are needed for drawing & resizing the graph
     function render() {
         var s = getSize();
         x.range([0, s.width]);
         y.range([s.height, 0]);
+        scrollScale.range([0, s.width]);
         background.attr("width", s.width);
         clipper.attr("width", s.width);
         plot.attr("width", s.width);
@@ -308,8 +334,21 @@ function characterChart(svg, dataURL, startDate, endDate) {
         y0line.attr("x2", s.width)
             .attr("y1", y(0))
             .attr("y2", y(0));
+        scrollbar.attr("width", s.width + 20);
+        errMsg.attr("width", s.width - 20);
 
-        recalc();
+        // Ensure zooming functionality after resizing
+        var currentDomain = x.domain()[1] - x.domain()[0],
+            minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
+            maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+        zoom.scaleExtent([minScale, maxScale])
+            .x(x);
+
+
+        // Ugly but necessary for now to prevent resizing errors when there's no csv
+        if (self.ready == 2) {
+            recalc();
+        }
     }
 
     // Operations which are needed for drawing, resizing & zooming
@@ -324,11 +363,13 @@ function characterChart(svg, dataURL, startDate, endDate) {
         xLabel.call(xAxis);
         yLabel.call(yAxis);
         eLabel.call(eAxis);
+        scrollLabel.call(scrollAxis);
     }
 
     // Updates episode labels & reacts to screen size
     function updateLabels() {
         var dmn = x.domain()[1] - x.domain()[0]; // Current domain
+        var fulldmn = self.xDomainBounds[1] - self.xDomainBounds[0]; // Full domain
         var w = getSize().width;
         var dayWidth = (86400000 / dmn) * w;
 
@@ -340,6 +381,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .attr("width", function (d) {
                 return dayWidth;
             });
+
+        // Zoom knob
+        scrollknob.attr("width", Math.max(w * dmn / fulldmn, 20))
+            .attr("x", w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn);
 
         // Cheap Screen Size factor
         var factor = 1; // BETTER: 2/5, 3/5, 4/5, 1 (0?)
@@ -383,28 +428,32 @@ function characterChart(svg, dataURL, startDate, endDate) {
     function go() {
         self.ready++;
         if (self.ready === 2) {
-            render();
-
-            // Finally draw static graph elements. Looks weird if they are drawn right from the beginning
-            rightBorder.attr("width", 1);
+            // Not needed in case of error
             y0line.attr("stroke-width", 0.5);
 
-            // Add zoom handlers
-            d3.selectAll(".react").call(zoom);
+            render();
 
-            // Resizing behavior
-            this.resize = render;
+            // Zoom Handling
+            var currentDomain = x.domain()[1] - x.domain()[0],
+                minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
+                maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+
+            zoom.scaleExtent([minScale, maxScale])
+                .x(x)
+                .on("zoom", zoomed);
+
+            // Zoom behavior of zoombar
+            drag.on("drag", dragged);
+
+            // Add event handlers
+            d3.selectAll(".react").call(zoom);
+            scrollknob.call(drag);
         }
     }
 
     // Error Message (in case of non-existent csv data)
     function errorMessage() {
-        plot.append("foreignObject")
-            .attr("width", getSize().width - 20)
-            .attr("height", getSize().height - 10)
-            .attr("x", 20)
-            .attr("y", 10)
-            .append("xhtml:div")
+        errMsg.append("xhtml:div")
             .text("There seem to be no relevant tweets on this  character. Sorry.")
             .attr("class", "error");
     }

@@ -1,10 +1,10 @@
 .area.pos {
-    fill: #90BB5E;
+    /*fill: #90BB5E;*/
     fill: #6aaa1f;
 }
 .area.neg {
-    fill: #5A180D;
-    fill: #6f1f12;
+    /*fill: #5A180D;
+    fill: #6f1f12;*/
     fill: #c63d17;
 }
 .background {
@@ -23,6 +23,20 @@
     "vector-effect": non-scaling-stroke;
     stroke-width: 1px;
 }
+.scrollbar {
+    fill: #313131;
+    stroke: #000;    
+}
+.scrollknob {
+    fill: #f5f5f5;
+    /*fill: #5A180D;
+    fill: #1128d9;*/
+    fill-opacity: 0.4;
+    stroke: #000;
+    stroke-width: 2px;
+    cursor: move;
+    pointer-events: all;
+}
 .axis {
     font: 12px sans-serif;
     fill: #f5f5f5;
@@ -34,14 +48,20 @@
     shape-rendering: crispEdges;
     "vector-effect": non-scaling-stroke;
 }
+.scroll path {
+    stroke: none;
+}
 .tick > line {
     stroke: #f5f5f5;
 }
 .react {
-    cursor: move;
+    cursor: col-resize;
     pointer-events: all;
 }
 .episode {
     fill: #f5f5f5;
     opacity: 0.25;
+}
+.noaction {
+    pointer-events: none;
 }
