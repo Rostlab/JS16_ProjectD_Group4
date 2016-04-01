@@ -459,8 +459,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
             d3.selectAll(".react").call(zoom);
             scrollknob.call(drag);
             trendButton.on("click", toggleTrend);
-            trendButton.on("mouseenter", function(){trendButton.attr("class", "trendbutton fullOpac")})
-            trendButton.on("mouseleave", function(){trendButton.attr("class", "trendbutton")})
+            trendButton.on("mouseenter", function(){trendButton.attr("class", "trendbutton fullOpac");});
+            trendButton.on("mouseleave", function(){trendButton.attr("class", "trendbutton");});
         }
     }
     
