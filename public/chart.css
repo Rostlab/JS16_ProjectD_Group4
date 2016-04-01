@@ -7,6 +7,9 @@
     fill: #6f1f12;*/
     fill: #c63d17;
 }
+.lowOpac {
+    fill-opacity: 0.5;
+}
 .background {
     fill: #313131;
 }
@@ -15,17 +18,45 @@
     color: #f5f5f5;
     background-color: #313131;
 }
+.trendbutton {
+    pointer-events: all;
+    cursor: pointer;
+    opacity: 0.3;
+}
+.fullOpac {
+    opacity: 1;
+}
+.trendbutton > rect {
+    fill: #1f1f1f;
+    stroke: #f5f5f5;
+    stroke-width: 1px;
+}
+.trendbutton > text {
+    font: 12px sans-serif;
+    fill: #f5f5f5;
+    /* Prevent selection */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 .trendline {
     fill: none;
-    stroke: none;
+    stroke: #f5f5f5;
+    stroke-opacity: 0.8;
     /*#4479ef;*/
     shape-rendering: crispEdges;
     "vector-effect": non-scaling-stroke;
-    stroke-width: 1px;
+    stroke-width: 2px;
+}
+.noshow {
+    stroke: none;
 }
 .scrollbar {
     fill: #313131;
-    stroke: #000;    
+    stroke: #000;
 }
 .scrollknob {
     fill: #f5f5f5;

@@ -96,8 +96,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // trendline
     var calcTrend = d3.svg.line()
-        .interpolate("cardinal-open")
-        .tension(0)
+        .interpolate("basis-open")
         .x(function (d) {
             return x(d.date);
         })
@@ -143,7 +142,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         neg = chart.append("path").attr("class", "area neg");
 
     // add trendline
-    var trendline = chart.append("path").attr("class", "trendline");
+    var trendline = chart.append("path").attr("class", "trendline noshow");
 
     // add error field
     var errMsg = plot.append("foreignObject")
@@ -181,6 +180,18 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("width", 1)
         .style("fill", "#000");
 
+    // add Trendline-Button
+    var trendButton = container.append("g")
+        .attr("transform", "translate(10, " + (getSize().height - 30) + ")")
+        .attr("class", "trendbutton");
+    trendButton.append("rect")
+        .attr("width", 143)
+        .attr("height", 20);
+    trendButton.append("text")
+        .attr("x", 4)
+        .attr("y", 15)
+        .text("Show accumulated trend");
+    
     function convertTwitterCSV(d) {
         // convert string data from CSV
         return {
@@ -315,9 +326,9 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         recalc();
     }
-    
-    function dragged(){        
-        zoom.translate([zoom.translate()[0]-d3.event.dx, 0]);
+
+    function dragged() {
+        zoom.translate([zoom.translate()[0] - d3.event.dx, 0]);
         zoomed();
     }
 
@@ -343,7 +354,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
             maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
         zoom.scaleExtent([minScale, maxScale])
             .x(x);
-
 
         // Ugly but necessary for now to prevent resizing errors when there's no csv
         if (self.ready === 2) {
@@ -448,6 +458,19 @@ function characterChart(svg, dataURL, startDate, endDate) {
             // Add event handlers
             d3.selectAll(".react").call(zoom);
             scrollknob.call(drag);
+            trendButton.on("click", toggleTrend);
+            trendButton.on("mouseenter", function(){trendButton.attr("class", "trendbutton fullOpac")})
+            trendButton.on("mouseleave", function(){trendButton.attr("class", "trendbutton")})
+        }
+    }
+    
+    function toggleTrend(){
+        if(trendline.attr("class") === "trendline"){
+            trendline.attr("class",  "trendline noshow");
+            chart.attr("class", "react");
+        } else {
+            trendline.attr("class", "trendline");
+            chart.attr("class", "react lowOpac");
         }
     }
 
