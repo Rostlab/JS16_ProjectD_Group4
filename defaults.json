@@ -642,7 +642,7 @@
 
     "sentimentlist": {
         "honorable": 2,
-        "nothing": -1,
+        "nothing": 0,
         "fck": -4,
         "coolest": 2,
         "lord": 3,
@@ -661,7 +661,7 @@
         "stand": 2,
         "gracias": 2,
         "limit": -2,
-        "tough": -2,
+        "tough": 2,
         "kidnap": -2,
         "hang": -2,
         "present": 2,
@@ -677,7 +677,7 @@
         "pukes": -2,
         "fruitless": -2,
         "offence": -2,
-        "RIP": -3,
+        "RIP": 2,
         "fukn": -4,
         "problematic": -2,
         "rocks": 3,
