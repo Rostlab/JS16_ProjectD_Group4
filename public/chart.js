@@ -12,6 +12,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
     this.ready = 0;
+    this.factor = 0; // Screen size factor
     // startDate & endDate are optional parameters. Default values will be overwritten later.
     this.startDate = startDate;
     this.endDate = endDate;
@@ -400,6 +401,20 @@ function characterChart(svg, dataURL, startDate, endDate) {
         zoom.scaleExtent([minScale, maxScale])
             .x(x);
 
+        // Improved screen size factor
+        if (s.width < 400) {
+            self.factor = 1 / 8;
+        } else if (s.width < 600) {
+            self.factor = 0.30;
+        } else if (s.width < 800) {
+            self.factor = 1 / 2;
+        } else if (s.width < 1200) {
+            self.factor = 3 / 4;
+        } else {
+            self.factor = 1;
+        }
+        xAxis.ticks(Math.min(3, 10 * self.factor));
+
         // Ugly but necessary for now to prevent resizing errors when there's no csv
         if (self.ready === 2) {
             recalc();
@@ -441,30 +456,20 @@ function characterChart(svg, dataURL, startDate, endDate) {
         scrollknob.attr("width", Math.max(w * dmn / fulldmn, 20))
             .attr("x", w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn);
 
-        // Cheap Screen Size factor
-        var factor = 1; // BETTER: 2/5, 3/5, 4/5, 1 (0?)
-        if (w < 900) {
-            factor = 1 / 3;
-        } else if (w < 1400) {
-            factor = 2 / 3;
-        }
-
-        xAxis.ticks(10 * factor);
-
         // Move the Labels into the center of the day 
         eLabel.selectAll('.tick text')
             .attr('transform', 'translate(' + dayWidth / 2 + ',0)');
 
         // Custom Tick Format for the Episode Axis
-        if (dmn < (factor * 6 * 7 * 86400000)) { // < 6 Weeks * factor : Show Title            
+        if (dmn < (self.factor * 6 * 7 * 86400000)) { // < 6 Weeks * factor : Show Title            
             eAxis.tickFormat(function (d, i) {
                 return self.episodeData[i].code + ': "' + self.episodeData[i].title + '"';
             });
-        } else if (dmn < (factor * 6 * 30 * 86400000)) { // < 6 Months * factor: Show Code
+        } else if (dmn < (self.factor * 6 * 30 * 86400000)) { // < 6 Months * factor: Show Code
             eAxis.tickFormat(function (d, i) {
                 return self.episodeData[i].code;
             });
-        } else if (w > 500) { //Show season start
+        } else if (w > 500 || dmn < (3 * 365 * 86400000)) { //Show season start
             eAxis.tickFormat(function (d, i) {
                 return self.episodeData[i].seasonStartLabel;
             });
