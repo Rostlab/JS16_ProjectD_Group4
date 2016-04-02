@@ -336,6 +336,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
         neg.datum(data);
         trendline.datum(data);
 
+        self.allData = data;
+
         go();
     }
 
@@ -420,6 +422,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Operations which are needed for drawing, resizing & zooming
     function recalc() {
+        var dmn = x.domain();
+        var relevantData = self.allData.filter(function (d) {
+            if (d.date > dmn[1] || d.date < dmn[0]) {
+                return false;
+            }
+            return true;
+        });
+        pos.datum(relevantData);
+        neg.datum(relevantData);
+        trendline.datum(relevantData);
         pos.attr("d", calcAreaPos);
         neg.attr("d", calcAreaNeg);
         trendline.attr("d", calcTrend);
