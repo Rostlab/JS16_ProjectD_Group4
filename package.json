@@ -1,6 +1,6 @@
 {
   "name": "gotsentimental",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "GoT Twitter Sentiment Analysis",
   "main": "index.js",
   "scripts": {
