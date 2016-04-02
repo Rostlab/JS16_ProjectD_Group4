@@ -413,9 +413,9 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         // y from min(neg) to max(pos)
         self.fullYDomain = [d3.min(data, function (d) {
-            return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
+            return Math.min(-5.5, d.neg * 1.1); // Minimum domain = [-5.5;+5.5], always at least 10% headroom
         }), d3.max(data, function (d) {
-            return Math.max(5.5, d.pos * 1.05);
+            return Math.max(5.5, d.pos * 1.1);
         })];
         y.domain(self.fullYDomain);
         //y.nice();
@@ -633,9 +633,9 @@ function characterChart(svg, dataURL, startDate, endDate) {
         // Update hourlyFullYDomain when switchting from daily to hourly or new data is available
         if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode === false)) {
             var visibleDomain = [d3.min(relevantData, function (d) {
-                return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
+                return Math.min(-5.5, d.neg * 1.1); // Minimum domain = [-5.5;+5.5], always at least 10% headroom
             }), d3.max(relevantData, function (d) {
-                return Math.max(5.5, d.pos * 1.05);
+                return Math.max(5.5, d.pos * 1.1);
             })];
 
             // Update only if new max
