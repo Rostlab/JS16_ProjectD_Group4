@@ -15,6 +15,7 @@ function apiGet(path) {
         var proto = (cfg.api.https) ? https : http;
         var req = proto.request({
             hostname: cfg.api.host,
+            port:     (cfg.api.port !== undefined) ? cfg.api.port : undefined,
             path:     cfg.api.prefix + path,
             method:  'GET'
         }, function(res) {
