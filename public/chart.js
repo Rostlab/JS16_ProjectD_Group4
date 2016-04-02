@@ -1,5 +1,19 @@
 // function to parse string in the format 2006-01-02 to JavaScript's Date type
 var parseDate = d3.time.format("%Y-%m-%d").parse;
+// Hourly Data e.g. 2005-01-02T03
+var parseDetailDate = d3.time.format("%Y-%m-%dT%H").parse;
+
+var parseYearMonth = d3.time.format("%Y-%m").parse;
+
+// returns the month string used in our csvs
+function stringMonth(month) {
+    month++; // Our csv month starts at 1, JavaScript month at 0
+    if (month > 9) {
+        return month;
+    } else {
+        return "0" + month;
+    }
+}
 
 // returns the characterChart
 function characterChart(svg, dataURL, startDate, endDate) {
@@ -7,14 +21,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var zoom = d3.behavior.zoom(); // plot zooming behavior
     var drag = d3.behavior.drag(); // drag behavior scrollbar
     var drag2 = d3.behavior.drag(); // drag behavior plot
-    this.fullYdomain = [];
-    this.fullXdomain = []; // Range of available data
     this.xDomainBounds = []; // Range of shown data    
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
     this.ready = 0;
     this.factor = 0; // Screen size factor
     this.dx = 0;
+    this.detailData = []; // This is where I'd save my monthly csvs... If I had any
+    this.fullYDomain = [];
+    this.hourlyFullYDomain = [0, 0];
+    this.hourly = false; // Hourly or monthly data shown?
     // startDate & endDate are optional parameters. Default values will be overwritten later.
     this.startDate = startDate;
     this.endDate = endDate;
@@ -28,6 +44,12 @@ function characterChart(svg, dataURL, startDate, endDate) {
             s += path[i] + "/";
         }
         return s;
+    }
+
+    function getDetailPrefix() {
+        var prfx = getPrefix();
+        var slug = dataURL.split(prfx)[1].split(".csv")[0];
+        return prfx + slug + "/";
     }
 
     // set margin
@@ -77,7 +99,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // positive area between x-axis at y=0 and max(y)
     var calcAreaPos = d3.svg.area()
-        //.interpolate("monotone") // Fake bar chart: step-before, smooth curve: monotone
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -88,7 +109,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // negative area between x-axis at y=0 and min(y)
     var calcAreaNeg = d3.svg.area()
-        //.interpolate("monotone") // Fake bar chart: step-before, smooth curve: monotone
         .x(function (d) {
             return x(d.date);
         }).y0(function (d) {
@@ -240,10 +260,24 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("transform", "translate(10, " + 10 + ")")
         .attr("class", "trendbutton");
 
+    // add Data-Type-Label
+    var dataTypeLabel = container.append("g")
+        .attr("transform", "translate(10, " + (getSize().height - 60) + ")")
+        .attr("class", "trendbutton noaction");
+
     function convertTwitterCSV(d) {
         // convert string data from CSV
         return {
             date: parseDate(d.date), // parse date column to Date
+            pos: +d.pos, // convert pos column to positive number
+            neg: -d.neg // convert neg column to negative number
+        };
+    }
+
+    // Hourly data
+    function convertDetailTwitterCSV(d) {
+        return {
+            date: parseDetailDate(d.date), // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
             neg: -d.neg // convert neg column to negative number
         };
@@ -273,8 +307,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         var newData = [];
         var dateRange = d3.extent(data, function (d) {
-            return d.date;
+            return new Date(d.date);
         });
+        dateRange[0].setDate(dateRange[0].getDate() - 1);
+
         var sortByDate = function (a, b) {
             return a.date > b.date ? 1 : -1;
         };
@@ -295,22 +331,75 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 }
             }
         }
+        // Add "buffer entry" on the right
+        newData.push({
+            date: new Date(stepdate), // Screw closures!
+            pos: 0,
+            neg: 0
+        });
 
         fillChart(data.concat(newData).sort(sortByDate));
     }
 
-    function fillChart(data) {
-        // fullXdomain: Range of available data
-        self.fullXdomain = d3.extent(data, function (d) {
-            return d.date;
-        });
+    // Fills in missing csv data for hourly values
+    function assignDetailDefaultValues(error, data) {
+        if (!!error) {
+            // No data here ¯\_(ツ)_/¯ Let's create some
+            // Getting a usable date from the error response url
+            data = [];
+            data[0] = {};
+            data[0].date = parseYearMonth(error.responseURL.split(getDetailPrefix())[1].split(".csv")[0]);
+        }
+        var newData = [];
+        var dateRange = function () {
+            var dfloor = new Date(data[0].date);
+            var dtop = new Date(data[0].date);
+            dfloor.setDate(1);
+            dfloor.setHours(0);
+            dtop.setMonth(dtop.getMonth() + 1);
+            dtop.setDate(0);
+            dtop.setHours(23);
+            return [dfloor, dtop];
+        }();
+        var sortByDate = function (a, b) {
+            return a.date > b.date ? 1 : -1;
+        };
+        var stepdate = new Date(dateRange[0]);
 
+        for (var i = 0; i < data.length;) {
+            if ((data[i].date - stepdate) === 0) {
+                stepdate.setHours(stepdate.getHours() + 1);
+                i++;
+            } else {
+                while (data[i].date.valueOf() !== stepdate.valueOf()) {
+                    newData.push({
+                        date: new Date(stepdate), // Screw closures!
+                        pos: 0,
+                        neg: 0
+                    });
+                    stepdate.setHours(stepdate.getHours() + 1);
+                }
+            }
+        }
+        while (stepdate.valueOf() < dateRange[1].valueOf()) {
+            newData.push({
+                date: new Date(stepdate), // Screw closures!
+                pos: 0,
+                neg: 0
+            });
+            stepdate.setHours(stepdate.getHours() + 1);
+        }
+
+        var datestring = dateRange[0].getFullYear() + "-" + stringMonth(dateRange[0].getMonth());
+        var index = detailDataExists(datestring)[0];
+        self.detailData[index].data = data.concat(newData).sort(sortByDate);
+        recalc();
+    }
+
+    function fillChart(data) {
         // xDomainBounds: Max range of scrollable graph area. At least slightly before the first season, up until today.
         // We should extend the graph all the way back even if there's no data, to show that Twitter didn't care back then.
         self.xDomainBounds = [new Date(2010, 8, 1), new Date()];
-        /*      if (self.fullXdomain[0] < self.xDomainBounds[0]) {
-                  self.xDomainBounds[0] = self.fullXdomain[0];
-              };*/
 
         // Set initial domain. If not defined during the call: All the available data.
         if (typeof self.startDate === "undefined") {
@@ -323,18 +412,21 @@ function characterChart(svg, dataURL, startDate, endDate) {
         scrollScale.domain(self.xDomainBounds);
 
         // y from min(neg) to max(pos)
-        y.domain([d3.min(data, function (d) {
-            return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
+        self.fullYDomain = [d3.min(data, function (d) {
+            return Math.min(-5.5, d.neg * 1.1); // Minimum domain = [-5.5;+5.5], always at least 10% headroom
         }), d3.max(data, function (d) {
-            return Math.max(5.5, d.pos * 1.05);
-        })]);
+            return Math.max(5.5, d.pos * 1.1);
+        })];
+        y.domain(self.fullYDomain);
         //y.nice();
-        self.fullYdomain = y.domain();
+        yLabel.call(yAxis);
 
         // set area data
         pos.datum(data);
         neg.datum(data);
         trendline.datum(data);
+
+        self.allData = data;
 
         go();
     }
@@ -418,17 +510,177 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
     }
 
+    // Returns array [integer, boolean]
+    // integer: array index of entry if it exists, else -1
+    // boolean: entry already has data value
+    function detailDataExists(datestring) {
+        for (var i = 0; i < self.detailData.length; i++) {
+            if (self.detailData[i].name === datestring) {
+                if (self.detailData[i] && self.detailData[i].data !== undefined) {
+                    return [i, true];
+                }
+                return [i, false];
+            }
+        }
+        return [-1, false];
+    }
+
+
     // Operations which are needed for drawing, resizing & zooming
     function recalc() {
+        var hourlyMode = self.hourly;
+        var dmn = x.domain();
+        var dmnMonth = [dmn[0].getMonth(), dmn[1].getMonth()];
+        var dmnYear = [dmn[0].getFullYear(), dmn[1].getFullYear()];
+        var relevantData;
+        var newData = false;
+
+        // Helper Functions for Filter
+        function dmnfilterDays(d) {
+            if (d.date.valueOf() > (dmn[1].valueOf() + 3 * 86400000) || d.date.valueOf() < (dmn[0].valueOf() - 3 * 86400000)) {
+                return false;
+            }
+            return true;
+        }
+
+        function dmnfilterHours(d) {
+            if (d.date.valueOf() > (dmn[1].valueOf() + 3 * 3600000) || d.date.valueOf() < (dmn[0].valueOf() - 3 * 3600000)) {
+                return false;
+            }
+            return true;
+        }
+
+        // Less than one month to show?
+        if ((dmn[1] - dmn[0]) <= (30 * 86400000)) {
+            var dtl0filename = dmnYear[0] + "-" + stringMonth(dmnMonth[0]);
+            var dtl0 = detailDataExists(dtl0filename);
+            // Data for two months needed?        
+            if (dmnMonth[0] !== dmnMonth[1]) {
+                var dtl1filename = dmnYear[1] + "-" + stringMonth(dmnMonth[1]);
+                var dtl1 = detailDataExists(dtl1filename);
+                // Entry existing already?
+                if (dtl0[0] > -1 && dtl1[0] > -1) {
+                    if (dtl0[1] && dtl1[1]) {
+                        // Filter only if data ready
+                        var emptycheck = self.detailData[dtl1[0]].data.filter(function (d) {
+                            if (d.pos !== 0 || d.neg !== 0) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        });
+                        if (emptycheck.length === 0) {
+                            relevantData = self.detailData[dtl0[0]].data;
+                        } else {
+                            relevantData = self.detailData[dtl0[0]].data.concat(self.detailData[dtl1[0]].data);
+                        }
+                        relevantData = relevantData.filter(dmnfilterHours);
+                        hourlyMode = true;
+                        newData = true;
+                    }
+                } else {
+                    // Data not existing yet.
+                    if (dtl0[0] === -1) {
+                        // Lower month missing. Create entry, fill it with data in assignDefaultValues
+                        self.detailData.push({
+                            "name": dtl0filename,
+                            "data": []
+                        });
+                        d3.csv(getDetailPrefix() + dtl0filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
+                    }
+                    if (dtl1[0] === -1) {
+                        // Higher month missing. Create entry, fill it with data in assignDefaultValues
+                        self.detailData.push({
+                            "name": dtl1filename,
+                            "data": []
+                        });
+                        d3.csv(getDetailPrefix() + dtl1filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
+                    }
+                    // Exit function execution. New data will come.
+                    return;
+                }
+            } else {
+                // Only data for one month needed
+                // Entry existing already?
+                if (dtl0[0] > -1) {
+                    if (dtl0[1]) {
+                        // Filter only if data ready
+                        relevantData = self.detailData[dtl0[0]].data.filter(dmnfilterHours);
+                        hourlyMode = true;
+                        newData = true;
+                    }
+                } else {
+                    // Data not existing yet
+                    self.detailData.push({
+                        "name": dtl0filename,
+                        "data": []
+                    });
+                    d3.csv(getDetailPrefix() + dtl0filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
+                    // Exit function execution. New data will come.
+                    return;
+                }
+            }
+        } else {
+            // More than one month to show. Display daily data.
+            relevantData = self.allData.filter(dmnfilterDays);
+            hourlyMode = false;
+        }
+
+        pos.datum(relevantData);
+        neg.datum(relevantData);
+        trendline.datum(relevantData);        
+
+        // Update hourlyFullYDomain when switchting from daily to hourly or new data is available
+        if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode === false)) {
+            var visibleDomain = [d3.min(relevantData, function (d) {
+                return Math.min(-5.5, d.neg * 1.1); // Minimum domain = [-5.5;+5.5], always at least 10% headroom
+            }), d3.max(relevantData, function (d) {
+                return Math.max(5.5, d.pos * 1.1);
+            })];
+
+            // Update only if new max
+            var tmp = self.hourlyFullYDomain;
+            self.hourlyFullYDomain = d3.extent(self.hourlyFullYDomain.concat(visibleDomain), function (d) {
+                return d;
+            });
+            if (tmp !== self.hourlyFullYDomain) {
+                y.domain(self.hourlyFullYDomain);
+                y0line.attr("y1", y(0))
+                    .attr("y2", y(0));
+                yLabel.transition().duration(300).call(yAxis);
+            }
+        }
+
+        // Have we switched from Daily to Hourly View or vice versa?
+        if (hourlyMode !== self.hourly) {
+            if (hourlyMode === true) {
+                // Switched to hourly mode
+                // Fancy animation
+                dataTypeLabel.select("text").text("Score / Hour");
+                dataTypeLabel.transition().duration(500).attr("style", "opacity: 1").transition().duration(500).attr("style", "opacity: 0.3");
+            } else {
+                // Switched to daily mode
+                // Fancy animation & domain change
+                dataTypeLabel.select("text").text("Score / Day");
+                dataTypeLabel.transition().duration(500).attr("style", "opacity: 1").transition().duration(500).attr("style", "opacity: 0.3");
+                y.domain(self.fullYDomain);
+                y0line.attr("y1", y(0))
+                    .attr("y2", y(0));
+                yLabel.transition().duration(500).call(yAxis);
+            }
+            pos.attr("style", "opacity: 0").transition().duration(300).attr("style", "opacity: 1");
+            neg.attr("style", "opacity: 0").transition().duration(300).attr("style", "opacity: 1");
+            trendline.attr("style", "opacity: 0").transition().duration(300).attr("style", "opacity: 1");
+        }
         pos.attr("d", calcAreaPos);
         neg.attr("d", calcAreaNeg);
-        trendline.attr("d", calcTrend);
+        trendline.attr("d", calcTrend);        
+        self.hourly = hourlyMode;
 
         updateLabels();
 
         // axis
         xLabel.call(xAxis);
-        yLabel.call(yAxis);
         eLabel.call(eAxis);
         scrollLabel.call(scrollAxis);
     }
@@ -502,6 +754,13 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("y", 15)
                 .attr("class", "about")
                 .text("About");
+            dataTypeLabel.append("rect")
+                .attr("width", 80)
+                .attr("height", 20);
+            dataTypeLabel.append("text")
+                .attr("x", 4)
+                .attr("y", 15)
+                .text("Score / Day");
 
             render();
 
@@ -513,24 +772,36 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .x(x)
                 .on("zoomstart", function () {
                     self.zooming = true;
+                    //self.interval = setInterval(aggregateZoom, 10);
                 })
                 .on("zoomend", function () {
                     self.zooming = false;
+                    //clearInterval(self.interval);
                 });
             plot.call(zoom);
 
             // Dragging behavior of scrollbar
+            drag.on("dragstart", function () {
+                //self.interval = setInterval(aggregateZoom, 10);
+            });
             drag.on("drag", function () {
                 self.dx += d3.event.dx;
+            });
+            drag.on("dragend", function () {
+                //clearInterval(self.interval);
             });
             scrollknob.call(drag);
 
             // Dragging behavior of plot
             drag2.on("dragstart", function () {
                 d3.event.sourceEvent.stopPropagation();
+                //self.interval = setInterval(aggregateZoom, 10);
             });
             drag2.on("drag", function () {
                 self.dx -= d3.event.dx;
+            });
+            drag2.on("dragend", function () {
+                //clearInterval(self.interval);
             });
             d3.selectAll(".react").call(drag2);
 
@@ -550,18 +821,19 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 aboutButton.attr("class", "trendbutton");
             });
 
-            // Zoom every 10 ms at most
-            setInterval(aggregateZoom, 10);
+            aggregateZoom();
         }
     }
 
-    // Aggregate zoom events for smooth zooming behavior outside of Google Chrome :)
+
+    // Aggregate zoom events at every frame for smooth zooming behavior outside of Google Chrome :)
     function aggregateZoom() {
         if (self.dx !== 0 || self.zooming) {
             zoom.translate([zoom.translate()[0] - self.dx, 0]);
             self.dx = 0;
             zoomed();
         }
+        requestAnimationFrame(aggregateZoom);
     }
 
     function toggleTrend() {
