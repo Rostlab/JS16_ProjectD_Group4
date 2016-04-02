@@ -9,8 +9,8 @@ const mongoose = require('mongoose'),
 // => tweets inserted once for each character, maybe with different scoring
 
 const tweetSchema = new mongoose.Schema({
-    // character name. don't point fingers at us, not our idea...
-    character: { type: String, required: true, index: true },
+    // character id (internal)
+    character: { type: mongoose.Schema.Types.ObjectId, ref: 'CharacterSentiment', required: true, index: true },
 
     // unique tweet ID (from twitter)
     uid: { type: String, required: true },
@@ -45,8 +45,8 @@ model.addIfNotExists = function(tweet) {
     );
 };
 
-model.findByCharacterName = function(characterName) {
-    return model.find({ character: characterName });
+model.findByCharacterID = function(characterID) {
+    return model.find({ character: characterID });
 };
 
 module.exports = model;

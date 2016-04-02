@@ -82,7 +82,7 @@ function matchIDs(str) {
 
 // saveIDs retrieves the Tweets with the given IDs via the REST API and saves
 // the Tweets to DB.
-function saveIDs(characterName, ids) {
+function saveIDs(characterID, ids) {
     return new Promise(function(resolve, reject) {
         if (ids.length < 1) {
             resolve({saved: Promise.resolve(null)});
@@ -90,11 +90,11 @@ function saveIDs(characterName, ids) {
         }
         twitter.getTweetsList(ids).then(function(tweets) {
             // save all Tweets to DB and resolves with a Promise for stats
-            resolve({saved: saveTweets(characterName, tweets)});
+            resolve({saved: saveTweets(characterID, tweets)});
         }).catch(function(err) {
             // retry on rate-limitation (or service unavailable)
             function retry() {
-                saveIDs(characterName, ids).then(resolve).catch(reject);
+                saveIDs(characterID, ids).then(resolve).catch(reject);
             }
             if (!twitter.retryIfRateLimited(err, retry)) {
                 reject(err); // otherwise stuff went wrong
@@ -104,10 +104,10 @@ function saveIDs(characterName, ids) {
 }
 
 // saveTweets saves all Tweets to DB and resolves with a Promise for stats
-function saveTweets(characterName, tweets) {
+function saveTweets(characterID, tweets) {
     return new Promise(function(resolve, reject) {
         Promise.all(tweets.map(function(tweet) {
-            return twitter.saveTweet(characterName, tweet);
+            return twitter.saveTweet(characterID, tweet);
         })).then(function(res) {
             var found    = res.length,
                 inserted = 0;
@@ -165,14 +165,14 @@ mobile.crawl = function(character, full) {
         function tryCache() {
             // JavaScript is really really broken...
             const maxID  = Math.max.apply(Math, ids);
-            const cached = cache.maxID[character.name];
+            const cached = cache.maxID[character.id];
 
             if (maxID === cached) {
                 resolve({found: found, inserted: inserted});
                 return true;
             }
 
-            cache.maxID[character.name] = maxID;
+            cache.maxID[character.id] = maxID;
             return false;
         }
 
@@ -227,7 +227,7 @@ mobile.crawl = function(character, full) {
                             }
 
                             // save new IDs block
-                            saveIDs(character.name, save).then(function(res) {
+                            saveIDs(character.id, save).then(function(res) {
                                 loop(res.saved);
                             }).catch(reject);
                         }).catch(reject);
@@ -253,7 +253,7 @@ mobile.crawl = function(character, full) {
                     }
 
                     // save remaining IDs
-                    saveIDs(character.name, ids).then(function(res) {
+                    saveIDs(character.id, ids).then(function(res) {
                         res.saved.then(function(stats) {
                             if (stats !== null) {
                                 found    += stats.found;
@@ -265,7 +265,7 @@ mobile.crawl = function(character, full) {
                     }).catch(reject);
                 } else {
                     debug.error("unknown response:", url, res);
-                    saveIDs(character.name, ids);
+                    saveIDs(character.id, ids);
                     reject(res);
                 }
             }).catch(reject);
@@ -274,7 +274,7 @@ mobile.crawl = function(character, full) {
 };
 
 function analyzeCharacter(character) {
-    return aggregator.analyzeCharacter(character.name, character.slug).then(function() {
+    return aggregator.analyzeCharacter(character).then(function() {
         debug.log("Wrote CSVs for", character.name);
         return true;
     }, function(err) {

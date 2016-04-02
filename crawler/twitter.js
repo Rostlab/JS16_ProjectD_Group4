@@ -15,9 +15,9 @@ twitter.connect = function() {
     client = new Twit(cfg.twitter);
 };
 
-twitter.saveTweet = function(characterName, tweet) {
+twitter.saveTweet = function(characterID, tweet) {
     return Tweet.addIfNotExists({
-        character: characterName,
+        character: characterID,
         uid:       tweet.id,
         text:      tweet.text,
         lang:      tweet.lang,
@@ -127,7 +127,7 @@ function fetchTweets(character, maxID) {
             }
 
             Promise.all(tweets.map(function(tweet) {
-                return twitter.saveTweet(character.name, tweet);
+                return twitter.saveTweet(character.id, tweet);
             })).then(function(res) {
                 var found    = res.length,
                     inserted = 0;
@@ -232,7 +232,7 @@ twitter.streamTweets = function(query) {
             var lcSearchString = query[i].name.toLowerCase();
             var n = lcString.indexOf(lcSearchString);
             if (n > -1) {
-                twitter.saveTweet(query[i].name, data);
+                twitter.saveTweet(query[i].id, data);
             }
         }
     });

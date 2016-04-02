@@ -92,7 +92,7 @@ pkg.updateCharacter = function(name, full) {
             mobile.crawl(character, full).then(function(res) {
                 debug.info("MCRAWL FINISHED: ", res);
 
-                aggregator.analyzeCharacter(name, character.slug).then(function() {
+                aggregator.analyzeCharacter(character).then(function() {
                     debug.log("Wrote CSVs for", name);
                     resolve();
                 }).catch(function(err) {
