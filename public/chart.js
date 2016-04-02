@@ -416,7 +416,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
             return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
         }), d3.max(data, function (d) {
             return Math.max(5.5, d.pos * 1.05);
-        })]
+        })];
         y.domain(self.fullYDomain);
         //y.nice();
         yLabel.call(yAxis);
@@ -568,7 +568,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                             } else {
                                 return false;
                             }
-                        })
+                        });
                         if (emptycheck.length === 0) {
                             relevantData = self.detailData[dtl0[0]].data;
                         } else {
@@ -593,7 +593,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                         self.detailData.push({
                             "name": dtl1filename,
                             "data": []
-                        })
+                        });
                         d3.csv(getDetailPrefix() + dtl1filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
                     }
                     // Exit function execution. New data will come.
@@ -631,7 +631,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         trendline.datum(relevantData);        
 
         // Update hourlyFullYDomain when switchting from daily to hourly or new data is available
-        if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode == false)) {
+        if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode === false)) {
             var visibleDomain = [d3.min(relevantData, function (d) {
                 return Math.min(-5.5, d.neg * 1.05); // Minimum domain = [-5.5;+5.5], always at least 5% headroom
             }), d3.max(relevantData, function (d) {
@@ -653,7 +653,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         // Have we switched from Daily to Hourly View or vice versa?
         if (hourlyMode !== self.hourly) {
-            if (hourlyMode == true) {
+            if (hourlyMode === true) {
                 // Switched to hourly mode
                 // Fancy animation
                 dataTypeLabel.select("text").text("Score / Hour");
