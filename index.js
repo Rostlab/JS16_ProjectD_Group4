@@ -80,23 +80,23 @@ pkg.update = function(full) {
 /**
  * Update data for given character by crawling for new tweets and generating
  * new CSV files.
- * @param {string}  id            ID of the character
+ * @param {string}  name          Name of the character
  * @param {boolean} [full=false]  full rebuild or incremental update
  * @return {Promise<Object>}      A promise to the update results
  */
-pkg.updateCharacter = function(id, full) {
+pkg.updateCharacter = function(name, full) {
     return new Promise(function(resolve, reject) {
-        Character.byID(id).then(function(character) {
-            debug.info("Loaded", character.name);
+        Character.byName(name).then(function(character) {
+            debug.info("Loaded", name);
 
             mobile.crawl(character, full).then(function(res) {
                 debug.info("MCRAWL FINISHED: ", res);
 
-                aggregator.analyzeCharacter(id, character.slug).then(function() {
-                    debug.log("Wrote CSVs for", character.name);
+                aggregator.analyzeCharacter(name, character.slug).then(function() {
+                    debug.log("Wrote CSVs for", name);
                     resolve();
                 }).catch(function(err) {
-                    debug.error("FAILED to write CSVs for", character.name, err);
+                    debug.error("FAILED to write CSVs for", name, err);
                     reject();
                 });
             }, reject);
@@ -168,7 +168,6 @@ pkg.stopUpdateLoop = function() {
  * @type Object
  * @property {string} name        name of the character
  * @property {string} slug        human-readale URL-identifier for the character
- * @property {string} _id         unique ID
  * @property {number} total       total number of tweets in database
  * @property {number} positive    total number of positive tweets in database
  * @property {number} negative    total number of negative tweets in database
@@ -178,12 +177,12 @@ pkg.stopUpdateLoop = function() {
  */
 
 /**
- * Consume a token
- * @param  {string} id          ID of the character
+ * Get a character by name.
+ * @param  {string} name          Name of the character
  * @return {Promise<Character>} A promise to the token.
  */
-pkg.character = function(id) {
-    return Character.byID(id);
+pkg.character = function(name) {
+    return Character.byName(name);
 };
 
 /**

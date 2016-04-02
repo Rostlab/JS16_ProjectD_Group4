@@ -89,7 +89,7 @@ function saveMonth(slug, curYear, curMonth, month) {
     }, true);
 }
 
-aggregator.analyzeCharacter = function(id, slug) {
+aggregator.analyzeCharacter = function(name, slug) {
     return new Promise(function(resolve, reject) {
         //const start = new Date();
 
@@ -219,7 +219,7 @@ aggregator.analyzeCharacter = function(id, slug) {
 
             // Update DB
             ps.push(Character.update(
-                { _id: id },
+                { name: name },
                 { $set: {
                     total:      total,
                     positive:   pos,
@@ -234,7 +234,7 @@ aggregator.analyzeCharacter = function(id, slug) {
         }
 
         // stream tweets from DB and process stream
-        const stream = Tweet.find({ character: id }).sort({ created: 1 }).lean().stream();
+        const stream = Tweet.find({ character: name }).sort({ created: 1 }).lean().stream();
         stream.on('data', aggregate);
         stream.on('error', reject);
         stream.on('close', save);
