@@ -4,11 +4,8 @@ const mongoose = require('mongoose'),
       db       = require('../core/db');
 
 const characterSchema = mongoose.Schema({
-    // character ID (from API)
-    _id: {type: String, required: true, unique: true},
-
     // character name
-    name: {type: String, required: true},
+    name: {type: String, required: true, unique: true},
 
     // slug for character (unique ID for URL generated from name)
     // let's pray that there are no collisions for now
@@ -39,14 +36,14 @@ var model = db.model('CharacterSentiment', characterSchema);
 // Returns a Promise
 model.addIfNotExists = function(character) {
     return model.update(
-        { _id: character._id },
+        { name: character.name },
         { $setOnInsert: character },
         { upsert: true }
     );
 };
 
-model.byID = function(characterID) {
-    return model.findOne({ _id: characterID });
+model.byName = function(characterName) {
+    return model.findOne({ name: characterName });
 };
 
 // Call function for each character in DB

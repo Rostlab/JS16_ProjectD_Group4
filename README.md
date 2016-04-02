@@ -79,7 +79,6 @@ The following files are generated and required by [chart.js](#gotsentimental.js)
 | --- | --- | --- |
 | name | <code>string</code> | name of the character |
 | slug | <code>string</code> | human-readale URL-identifier for the character |
-| _id | <code>string</code> | unique ID |
 | total | <code>number</code> | total number of tweets in database |
 | positive | <code>number</code> | total number of positive tweets in database |
 | negative | <code>number</code> | total number of negative tweets in database |
@@ -96,10 +95,10 @@ The following files are generated and required by [chart.js](#gotsentimental.js)
 * [.init()](#gotsentimental.init)
 * [.shutdown()](#gotsentimental.shutdown)
 * [.update([full])](#gotsentimental.update) ⇒ <code>Promise.&lt;Object&gt;</code>
-* [.updateCharacter(id, [full])](#gotsentimental.updateCharacter) ⇒ <code>Promise.&lt;Object&gt;</code>
+* [.updateCharacter(name, [full])](#gotsentimental.updateCharacter) ⇒ <code>Promise.&lt;Object&gt;</code>
 * [.startUpdateLoop()](#gotsentimental.startUpdateLoop)
 * [.stopUpdateLoop()](#gotsentimental.stopUpdateLoop) ⇒ <code>Promise</code>
-* [.character(id)](#gotsentimental.character) ⇒ <code>Promise.&lt;Character&gt;</code>
+* [.character(name)](#gotsentimental.character) ⇒ <code>Promise.&lt;Character&gt;</code>
 * [.mostPopular([n])](#gotsentimental.mostPopular) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostHated([n])](#gotsentimental.mostHated) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
 * [.mostDiscussed([n])](#gotsentimental.mostDiscussed) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>
@@ -142,13 +141,13 @@ Update data by crawling for new tweets and generating new CSV files.
 **Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the update results.
 
 <a name="gotsentimental.updateCharacter"></a>
-#### gotsentimental.updateCharacter(id, [full]) ⇒ <code>Promise.&lt;Object&gt;</code>
+#### gotsentimental.updateCharacter(name, [full]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Update data for given [character](#character) by crawling for new tweets and generating
 new CSV files.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| id | <code>string</code> |  | ID of the character |
+| name | <code>string</code> |  | Name of the character |
 | [full] | <code>boolean</code> | <code>false</code> | full rebuild or incremental update |
 
 **Returns**: <code>Promise.&lt;Object&gt;</code> - A promise to the update results.
@@ -165,14 +164,14 @@ Waits for the current update to complete, if one is running.
 **Returns**: <code>Promise</code> - A promise which resolves when the loop is stopped.
 
 <a name="gotsentimental.character"></a>
-#### gotsentimental.character(id) ⇒ <code>Promise.&lt;Character&gt;</code>
-Get a [character](#character) by ID.
+#### gotsentimental.character(name) ⇒ <code>Promise.&lt;Character&gt;</code>
+Get a [character](#character) by name.
 
 **Returns**: <code>Promise.&lt;Character&gt;</code> - A promise to the [character](#character).
 
 | Param | Type | Description |
 | --- | --- | --- |
-| id | <code>string</code> | ID of the character |
+| name | <code>string</code> | Name of the character |
 
 <a name="gotsentimental.mostPopular"></a>
 #### gotsentimental.mostPopular([n]) ⇒ <code>Promise.&lt;Array.&lt;Character&gt;&gt;</code>

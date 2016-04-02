@@ -57,15 +57,12 @@ got.fetchCharacters = function() {
     return apiGet('characters');
 };
 
-// TODO: fetch and add episodes when the API is ready
 function saveCharacter(character) {
     if (blacklist.filter(character.name)) {
         return;
     }
 
-    // TODO: skip if created / updated date < last checked date
     return Character.addIfNotExists({
-        "_id":        character._id,
         "name":       character.name,
         "slug":       character.slug,
         "total":      0,
