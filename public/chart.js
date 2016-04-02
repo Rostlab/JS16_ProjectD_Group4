@@ -6,6 +6,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
     var zoom = d3.behavior.zoom(); // plot zooming behavior
     var drag = d3.behavior.drag(); // drag behavior scrollbar
+    var drag2 = d3.behavior.drag(); // drag behavior plot
     this.fullYdomain = [];
     this.fullXdomain = []; // Range of available data
     this.xDomainBounds = []; // Range of shown data    
@@ -13,6 +14,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     this.episodeData = null;
     this.ready = 0;
     this.factor = 0; // Screen size factor
+    this.dx = 0;
     // startDate & endDate are optional parameters. Default values will be overwritten later.
     this.startDate = startDate;
     this.endDate = endDate;
@@ -32,7 +34,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var margin = {
         top: 30,
         right: 20,
-        bottom: 100,
+        bottom: 85,
         left: 50
     };
 
@@ -373,11 +375,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
         recalc();
     }
 
-    function dragged() {
-        zoom.translate([zoom.translate()[0] - d3.event.dx, 0]);
-        zoomed();
-    }
-
     // Operations which are needed for drawing & resizing the graph
     function render() {
         var s = getSize();
@@ -415,7 +412,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         xAxis.ticks(Math.min(3, 10 * self.factor));
 
-        // Ugly but necessary for now to prevent resizing errors when there's no csv
+        // Recalculate DOM element positions only if there's actual data
         if (self.ready === 2) {
             recalc();
         }
@@ -512,17 +509,32 @@ function characterChart(svg, dataURL, startDate, endDate) {
             var currentDomain = x.domain()[1] - x.domain()[0],
                 minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
                 maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
-
             zoom.scaleExtent([minScale, maxScale])
                 .x(x)
-                .on("zoom", zoomed);
+                .on("zoomstart", function () {
+                    self.zooming = true;
+                })
+                .on("zoomend", function () {
+                    self.zooming = false;
+                });
+            plot.call(zoom);
 
-            // Zoom behavior of zoombar
-            drag.on("drag", dragged);
-
-            // Add event handlers
-            d3.selectAll(".react").call(zoom);
+            // Dragging behavior of scrollbar
+            drag.on("drag", function () {
+                self.dx += d3.event.dx;
+            });
             scrollknob.call(drag);
+
+            // Dragging behavior of plot
+            drag2.on("dragstart", function () {
+                d3.event.sourceEvent.stopPropagation();
+            });
+            drag2.on("drag", function () {
+                self.dx -= d3.event.dx;
+            });
+            d3.selectAll(".react").call(drag2);
+
+            // Register remaining event handlers  
             trendButton.on("click", toggleTrend);
             trendButton.on("mouseenter", function () {
                 trendButton.attr("class", "trendbutton fullOpac");
@@ -537,6 +549,18 @@ function characterChart(svg, dataURL, startDate, endDate) {
             aboutButton.on("mouseleave", function () {
                 aboutButton.attr("class", "trendbutton");
             });
+
+            // Zoom every 10 ms at most
+            setInterval(aggregateZoom, 10);
+        }
+    }
+
+    // Aggregate zoom events for smooth zooming behavior outside of Google Chrome :)
+    function aggregateZoom() {
+        if (self.dx !== 0 || self.zooming) {
+            zoom.translate([zoom.translate()[0] - self.dx, 0]);
+            self.dx = 0;
+            zoomed();
         }
     }
 
@@ -566,7 +590,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .text("There seem to be no relevant tweets about this character. Sorry.")
                 .attr("class", "error");
         } else {
-            // Adds non-resizable Error-Message for IE users. Might break svg boundaries when width is too small.
+            // Adds non-resizable Error-Message for IE users.
             plot.append("text")
                 .attr("class", "error noaction")
                 .attr("x", 20)

@@ -39,7 +39,7 @@
 }
 .aboutmsg {
     pointer-events: none;
-    fill: #f5f5f5;  
+    fill: #f5f5f5;
     font: 14px sans-serif;
 }
 .aboutmsg rect {
