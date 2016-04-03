@@ -20,7 +20,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
     var zoom = d3.behavior.zoom(); // plot zooming behavior
     var drag = d3.behavior.drag(); // drag behavior scrollbar
-    var drag2 = d3.behavior.drag(); // drag behavior plot
     this.xDomainBounds = []; // Range of shown data    
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
@@ -321,7 +320,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 stepdate.setDate(stepdate.getDate() + 1);
                 i++;
             } else {
-                while (data[i].date.valueOf() !== stepdate.valueOf()) {
+                while (data[i].date.valueOf() > stepdate.valueOf()) {
                     newData.push({
                         date: new Date(stepdate), // Screw closures!
                         pos: 0,
@@ -371,7 +370,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 stepdate.setHours(stepdate.getHours() + 1);
                 i++;
             } else {
-                while (data[i].date.valueOf() !== stepdate.valueOf()) {
+                while (data[i].date.valueOf() > stepdate.valueOf()) {
                     newData.push({
                         date: new Date(stepdate), // Screw closures!
                         pos: 0,
@@ -487,7 +486,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         // Ensure zooming functionality after resizing
         var currentDomain = x.domain()[1] - x.domain()[0],
             minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
-            maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+            maxScale = currentDomain / (1000 * 60 * 60 * 5); // 5 hours
         zoom.scaleExtent([minScale, maxScale])
             .x(x);
 
@@ -768,7 +767,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
             // Zoom Handling
             var currentDomain = x.domain()[1] - x.domain()[0],
                 minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
-                maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+                maxScale = currentDomain / (1000 * 60 * 60 * 5); // 5 hours
             zoom.scaleExtent([minScale, maxScale])
                 .x(x)
                 .on("zoomstart", function () {
@@ -792,19 +791,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 //clearInterval(self.interval);
             });
             scrollknob.call(drag);
-
-            // Dragging behavior of plot
-            drag2.on("dragstart", function () {
-                d3.event.sourceEvent.stopPropagation();
-                //self.interval = setInterval(aggregateZoom, 10);
-            });
-            drag2.on("drag", function () {
-                self.dx -= d3.event.dx;
-            });
-            drag2.on("dragend", function () {
-                //clearInterval(self.interval);
-            });
-            d3.selectAll(".react").call(drag2);
 
             // Register remaining event handlers  
             trendButton.on("click", toggleTrend);
