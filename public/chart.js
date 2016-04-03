@@ -433,6 +433,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     function handleEpisodes(error, data) {
         if (!!error) {
+            // Error message doesn't make sense for this case, but normally the episodes.csv should never be missing.
             errorMessage();
             return;
         }
@@ -628,7 +629,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         pos.datum(relevantData);
         neg.datum(relevantData);
-        trendline.datum(relevantData);        
+        trendline.datum(relevantData);
 
         // Update hourlyFullYDomain when switchting from daily to hourly or new data is available
         if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode === false)) {
@@ -674,7 +675,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         pos.attr("d", calcAreaPos);
         neg.attr("d", calcAreaNeg);
-        trendline.attr("d", calcTrend);        
+        trendline.attr("d", calcTrend);
         self.hourly = hourlyMode;
 
         updateLabels();
@@ -860,6 +861,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (document.implementation.hasFeature("www.http://w3.org/TR/SVG11/feature#Extensibility", "1.1")) {
             errMsg.append("xhtml:div")
                 .text("There seem to be no relevant tweets about this character. Sorry.")
+                .attr("clip-path", "url(#clip)")
                 .attr("class", "error");
         } else {
             // Adds non-resizable Error-Message for IE users.
@@ -870,6 +872,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("clip-path", "url(#clip)")
                 .text("No relevant tweets about this character.");
         }
+        render();
     }
 
     return this;
