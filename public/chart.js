@@ -158,7 +158,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("y", background.attr("y") - margin.top) // for eLabel
         .attr("width", background.attr("width"))
         .attr("height", background.attr("height") + margin.top);
-
+    
+    // For yAxis animations
+    var svgClipper = container.append("defs").append("clipPath")
+        .attr("id", "svgclip")
+        .append("rect")
+        .attr("x", -margin.left)
+        .attr("y", -margin.top)
+        .attr("width", parseInt(svg.style('width'), 10))
+        .attr("height", parseInt(svg.style('height'), 10)-40);    
+    
     // add area elements
     var pos = chart.append("path").attr("class", "area pos"),
         neg = chart.append("path").attr("class", "area neg");
@@ -237,7 +246,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     // add axis label elements
     var xLabel = container.append("g").attr("class", "x axis")
         .attr("transform", "translate(0," + (getSize().height) + ")"),
-        yLabel = container.append("g").attr("class", "y axis");
+        yLabel = container.append("g").attr("class", "y axis").attr("clip-path", "url(#svgclip)");
     var eLabel = container.append("g").attr("class", "x axis").attr("clip-path", "url(#clip)");
     var scrollLabel = container.append("g").attr("class", "scroll axis")
         .attr("transform", "translate(0," + (getSize().height + 50) + ")");
@@ -772,39 +781,53 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .x(x)
                 .on("zoomstart", function () {
                     self.zooming = true;
-                    //self.interval = setInterval(aggregateZoom, 10);
                 })
                 .on("zoomend", function () {
                     self.zooming = false;
-                    //clearInterval(self.interval);
                 });
             plot.call(zoom);
 
             // Dragging behavior of scrollbar
             drag.on("dragstart", function () {
-                //self.interval = setInterval(aggregateZoom, 10);
             });
             drag.on("drag", function () {
                 self.dx += d3.event.dx;
             });
             drag.on("dragend", function () {
-                //clearInterval(self.interval);
             });
             scrollknob.call(drag);
 
             // Register remaining event handlers  
-            trendButton.on("click", toggleTrend);
+            trendButton.on("click", function () {
+                d3.event.stopImmediatePropagation();
+                toggleTrend();
+            });
             trendButton.on("mouseenter", function () {
                 trendButton.attr("class", "trendbutton fullOpac");
             });
             trendButton.on("mouseleave", function () {
                 trendButton.attr("class", "trendbutton");
             });
-            aboutButton.on("click", toggleAbout);
+            trendButton.on("touchstart", function () {
+                trendButton.attr("class", "trendbutton fullOpac");
+            });
+            trendButton.on("touchend", function () {
+                trendButton.attr("class", "trendbutton");
+            });
+            aboutButton.on("click", function () {
+                d3.event.stopImmediatePropagation();
+                toggleAbout();
+            });
             aboutButton.on("mouseenter", function () {
                 aboutButton.attr("class", "trendbutton fullOpac");
             });
             aboutButton.on("mouseleave", function () {
+                aboutButton.attr("class", "trendbutton");
+            });
+            aboutButton.on("touchstart", function () {
+                aboutButton.attr("class", "trendbutton fullOpac");
+            });
+            aboutButton.on("touchend", function () {
                 aboutButton.attr("class", "trendbutton");
             });
 
