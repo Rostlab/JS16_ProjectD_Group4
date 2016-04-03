@@ -20,7 +20,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
     var zoom = d3.behavior.zoom(); // plot zooming behavior
     var drag = d3.behavior.drag(); // drag behavior scrollbar
-    var drag2 = d3.behavior.drag(); // drag behavior plot
     this.xDomainBounds = []; // Range of shown data    
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
@@ -159,7 +158,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("y", background.attr("y") - margin.top) // for eLabel
         .attr("width", background.attr("width"))
         .attr("height", background.attr("height") + margin.top);
-
+    
+    // For yAxis animations
+    var svgClipper = container.append("defs").append("clipPath")
+        .attr("id", "svgclip")
+        .append("rect")
+        .attr("x", -margin.left)
+        .attr("y", -margin.top)
+        .attr("width", parseInt(svg.style('width'), 10))
+        .attr("height", parseInt(svg.style('height'), 10)-40);    
+    
     // add area elements
     var pos = chart.append("path").attr("class", "area pos"),
         neg = chart.append("path").attr("class", "area neg");
@@ -238,7 +246,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     // add axis label elements
     var xLabel = container.append("g").attr("class", "x axis")
         .attr("transform", "translate(0," + (getSize().height) + ")"),
-        yLabel = container.append("g").attr("class", "y axis");
+        yLabel = container.append("g").attr("class", "y axis").attr("clip-path", "url(#svgclip)");
     var eLabel = container.append("g").attr("class", "x axis").attr("clip-path", "url(#clip)");
     var scrollLabel = container.append("g").attr("class", "scroll axis")
         .attr("transform", "translate(0," + (getSize().height + 50) + ")");
@@ -321,7 +329,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 stepdate.setDate(stepdate.getDate() + 1);
                 i++;
             } else {
-                while (data[i].date.valueOf() !== stepdate.valueOf()) {
+                while (data[i].date.valueOf() > stepdate.valueOf()) {
                     newData.push({
                         date: new Date(stepdate), // Screw closures!
                         pos: 0,
@@ -371,7 +379,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 stepdate.setHours(stepdate.getHours() + 1);
                 i++;
             } else {
-                while (data[i].date.valueOf() !== stepdate.valueOf()) {
+                while (data[i].date.valueOf() > stepdate.valueOf()) {
                     newData.push({
                         date: new Date(stepdate), // Screw closures!
                         pos: 0,
@@ -433,6 +441,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     function handleEpisodes(error, data) {
         if (!!error) {
+            // Error message doesn't make sense for this case, but normally the episodes.csv should never be missing.
             errorMessage();
             return;
         }
@@ -486,7 +495,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         // Ensure zooming functionality after resizing
         var currentDomain = x.domain()[1] - x.domain()[0],
             minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
-            maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+            maxScale = currentDomain / (1000 * 60 * 60 * 5); // 5 hours
         zoom.scaleExtent([minScale, maxScale])
             .x(x);
 
@@ -628,7 +637,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         pos.datum(relevantData);
         neg.datum(relevantData);
-        trendline.datum(relevantData);        
+        trendline.datum(relevantData);
 
         // Update hourlyFullYDomain when switchting from daily to hourly or new data is available
         if ((hourlyMode && newData) || (hourlyMode && self.hourlyMode === false)) {
@@ -674,7 +683,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         }
         pos.attr("d", calcAreaPos);
         neg.attr("d", calcAreaNeg);
-        trendline.attr("d", calcTrend);        
+        trendline.attr("d", calcTrend);
         self.hourly = hourlyMode;
 
         updateLabels();
@@ -767,57 +776,58 @@ function characterChart(svg, dataURL, startDate, endDate) {
             // Zoom Handling
             var currentDomain = x.domain()[1] - x.domain()[0],
                 minScale = currentDomain / (self.xDomainBounds[1] - self.xDomainBounds[0]), // All the available data
-                maxScale = currentDomain / (1000 * 60 * 60); // 1 hour
+                maxScale = currentDomain / (1000 * 60 * 60 * 5); // 5 hours
             zoom.scaleExtent([minScale, maxScale])
                 .x(x)
                 .on("zoomstart", function () {
                     self.zooming = true;
-                    //self.interval = setInterval(aggregateZoom, 10);
                 })
                 .on("zoomend", function () {
                     self.zooming = false;
-                    //clearInterval(self.interval);
                 });
             plot.call(zoom);
 
             // Dragging behavior of scrollbar
             drag.on("dragstart", function () {
-                //self.interval = setInterval(aggregateZoom, 10);
             });
             drag.on("drag", function () {
                 self.dx += d3.event.dx;
             });
             drag.on("dragend", function () {
-                //clearInterval(self.interval);
             });
             scrollknob.call(drag);
 
-            // Dragging behavior of plot
-            drag2.on("dragstart", function () {
-                d3.event.sourceEvent.stopPropagation();
-                //self.interval = setInterval(aggregateZoom, 10);
-            });
-            drag2.on("drag", function () {
-                self.dx -= d3.event.dx;
-            });
-            drag2.on("dragend", function () {
-                //clearInterval(self.interval);
-            });
-            d3.selectAll(".react").call(drag2);
-
             // Register remaining event handlers  
-            trendButton.on("click", toggleTrend);
+            trendButton.on("click", function () {
+                d3.event.stopImmediatePropagation();
+                toggleTrend();
+            });
             trendButton.on("mouseenter", function () {
                 trendButton.attr("class", "trendbutton fullOpac");
             });
             trendButton.on("mouseleave", function () {
                 trendButton.attr("class", "trendbutton");
             });
-            aboutButton.on("click", toggleAbout);
+            trendButton.on("touchstart", function () {
+                trendButton.attr("class", "trendbutton fullOpac");
+            });
+            trendButton.on("touchend", function () {
+                trendButton.attr("class", "trendbutton");
+            });
+            aboutButton.on("click", function () {
+                d3.event.stopImmediatePropagation();
+                toggleAbout();
+            });
             aboutButton.on("mouseenter", function () {
                 aboutButton.attr("class", "trendbutton fullOpac");
             });
             aboutButton.on("mouseleave", function () {
+                aboutButton.attr("class", "trendbutton");
+            });
+            aboutButton.on("touchstart", function () {
+                aboutButton.attr("class", "trendbutton fullOpac");
+            });
+            aboutButton.on("touchend", function () {
                 aboutButton.attr("class", "trendbutton");
             });
 
@@ -860,6 +870,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (document.implementation.hasFeature("www.http://w3.org/TR/SVG11/feature#Extensibility", "1.1")) {
             errMsg.append("xhtml:div")
                 .text("There seem to be no relevant tweets about this character. Sorry.")
+                .attr("clip-path", "url(#clip)")
                 .attr("class", "error");
         } else {
             // Adds non-resizable Error-Message for IE users.
@@ -870,6 +881,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("clip-path", "url(#clip)")
                 .text("No relevant tweets about this character.");
         }
+        render();
     }
 
     return this;
