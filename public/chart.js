@@ -19,7 +19,7 @@ function stringMonth(month) {
 function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
     var zoom = d3.behavior.zoom(); // plot zooming behavior
-    var drag = d3.behavior.drag(); // drag behavior scrollbar
+    var drag = d3.behavior.drag(); // drag behavior scrollbar    
     this.xDomainBounds = []; // Range of shown data    
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
@@ -158,7 +158,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("y", background.attr("y") - margin.top) // for eLabel
         .attr("width", background.attr("width"))
         .attr("height", background.attr("height") + margin.top);
-    
+
     // For yAxis animations
     var svgClipper = container.append("defs").append("clipPath")
         .attr("id", "svgclip")
@@ -166,8 +166,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("x", -margin.left)
         .attr("y", -margin.top)
         .attr("width", parseInt(svg.style('width'), 10))
-        .attr("height", parseInt(svg.style('height'), 10)-40);    
-    
+        .attr("height", parseInt(svg.style('height'), 10) - 40);
+
     // add area elements
     var pos = chart.append("path").attr("class", "area pos"),
         neg = chart.append("path").attr("class", "area neg");
@@ -270,13 +270,15 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // add Data-Type-Label
     var dataTypeLabel = container.append("g")
-        .attr("transform", "translate(10, " + (getSize().height - 60) + ")")
+        .attr("transform", "translate(10, " + (getSize().height - 55) + ")")
         .attr("class", "trendbutton noaction");
 
     function convertTwitterCSV(d) {
-        // convert string data from CSV
+        var tmp = parseDate(d.date);
+        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
+        //tmp.setTime(tmp.getTime() + offset);
         return {
-            date: parseDate(d.date), // parse date column to Date
+            date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
             neg: -d.neg // convert neg column to negative number
         };
@@ -284,17 +286,24 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Hourly data
     function convertDetailTwitterCSV(d) {
+        // Conversion to Eastern Time
+        var tmp = parseDetailDate(d.date);
+        //tmp.setTime(tmp.getTime() - (5 * 60 * 60 * 1000));
+        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
+        //tmp.setTime(tmp.getTime() + offset);
         return {
-            date: parseDetailDate(d.date), // parse date column to Date
+            date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
             neg: -d.neg // convert neg column to negative number
         };
     }
 
     function convertEpisodesCSV(d) {
-        // convert string data from CSV
+        var tmp = parseDate(d.date);
+        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
+        //tmp.setTime(tmp.getTime() + offset);
         return {
-            date: parseDate(d.date),
+            date: tmp,
             code: d.code,
             title: d.title,
             seasonStartLabel: function () {
@@ -325,6 +334,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var stepdate = new Date(dateRange[0]);
 
         for (var i = 0; i < data.length;) {
+            //console.log(data[i].date + " "+ stepdate);
             if ((data[i].date - stepdate) === 0) {
                 stepdate.setDate(stepdate.getDate() + 1);
                 i++;
@@ -336,6 +346,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                         neg: 0
                     });
                     stepdate.setDate(stepdate.getDate() + 1);
+
                 }
             }
         }
@@ -416,6 +427,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (typeof self.endDate === "undefined") {
             self.endDate = self.xDomainBounds[1];
         }
+
+        // Other start domain if there's less than three months of data
+        var range = d3.extent(data, function (d) {
+            return new Date(d.date);
+        });
+        if (range[1] - range[0] < 3 * 30 * 86400000) {
+            self.startDate = range[0];
+            self.endDate = range[1];
+        }
+
         x.domain([self.startDate, self.endDate]);
         scrollScale.domain(self.xDomainBounds);
 
@@ -702,7 +723,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var dayWidth = (86400000 / dmn) * w;
 
         // episode rectangles        
-        var szn = d3.selectAll(".episode")
+        var szn = svg.selectAll(".episode")
             .attr("x", function (d) {
                 return x(d.date);
             })
@@ -712,7 +733,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         // Zoom knob
         scrollknob.attr("width", Math.max(w * dmn / fulldmn, 20))
-            .attr("x", w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn);
+            .attr("x", Math.min(w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn, w - 20));
 
         // Move the Labels into the center of the day 
         eLabel.selectAll('.tick text')
@@ -763,9 +784,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("y", 15)
                 .attr("class", "about")
                 .text("About");
-            dataTypeLabel.append("rect")
-                .attr("width", 80)
-                .attr("height", 20);
             dataTypeLabel.append("text")
                 .attr("x", 4)
                 .attr("y", 15)
@@ -788,13 +806,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
             plot.call(zoom);
 
             // Dragging behavior of scrollbar
-            drag.on("dragstart", function () {
-            });
+            drag.on("dragstart", function () {});
             drag.on("drag", function () {
                 self.dx += d3.event.dx;
             });
-            drag.on("dragend", function () {
-            });
+            drag.on("dragend", function () {});
             scrollknob.call(drag);
 
             // Register remaining event handlers  
@@ -803,32 +819,27 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 toggleTrend();
             });
             trendButton.on("mouseenter", function () {
-                trendButton.attr("class", "trendbutton fullOpac");
+                if (trendline.attr("class") !== "trendline") {
+                    trendButton.attr("class", "trendbutton fullOpac");
+                }
             });
             trendButton.on("mouseleave", function () {
-                trendButton.attr("class", "trendbutton");
-            });
-            trendButton.on("touchstart", function () {
-                trendButton.attr("class", "trendbutton fullOpac");
-            });
-            trendButton.on("touchend", function () {
-                trendButton.attr("class", "trendbutton");
+                if (trendline.attr("class") !== "trendline") {
+                    trendButton.attr("class", "trendbutton");
+                }
             });
             aboutButton.on("click", function () {
-                d3.event.stopImmediatePropagation();
                 toggleAbout();
             });
             aboutButton.on("mouseenter", function () {
-                aboutButton.attr("class", "trendbutton fullOpac");
+                if (aboutMsg.attr("class") !== "aboutmsg fullOpac") {
+                    aboutButton.attr("class", "trendbutton fullOpac");
+                }
             });
             aboutButton.on("mouseleave", function () {
-                aboutButton.attr("class", "trendbutton");
-            });
-            aboutButton.on("touchstart", function () {
-                aboutButton.attr("class", "trendbutton fullOpac");
-            });
-            aboutButton.on("touchend", function () {
-                aboutButton.attr("class", "trendbutton");
+                if (aboutMsg.attr("class") !== "aboutmsg fullOpac") {
+                    aboutButton.attr("class", "trendbutton");
+                }
             });
 
             aggregateZoom();
@@ -850,9 +861,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (trendline.attr("class") === "trendline") {
             trendline.attr("class", "trendline noshow");
             chart.attr("class", "react");
+            trendButton.attr("class", "trendbutton");
         } else {
             trendline.attr("class", "trendline");
             chart.attr("class", "react lowOpac");
+            trendButton.attr("class", "trendbutton fullOpac");
         }
     }
 
