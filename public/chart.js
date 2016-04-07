@@ -54,7 +54,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     // set margin
     var margin = {
         top: 30,
-        right: 20,
+        right: 40,
         bottom: 85,
         left: 50
     };
@@ -194,7 +194,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     {
         aboutMsg.append("rect")
             .attr("width", 160)
-            .attr("height", 95);
+            .attr("height", 105);
 
         aboutMsg.append("circle")
             .attr("cx", 12)
@@ -225,7 +225,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .attr("transform", "translate(24,54)")
             .text("Accumulated trend");
         aboutMsg.append("text")
-            .attr("transform", "translate(6,80)")
+            .attr("transform", "translate(6,75)")
+            .text("Time in UTC");
+        aboutMsg.append("text")
+            .attr("transform", "translate(6,95)")
             .attr("font-style", "italic")
             .text("Optimized for Chrome");
     }
@@ -251,6 +254,19 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var scrollLabel = container.append("g").attr("class", "scroll axis")
         .attr("transform", "translate(0," + (getSize().height + 50) + ")");
 
+
+    // Add y axis explanation ;)
+    var happySmiley = container.append("text")
+        .attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
+        .style("fill", "#6aaa1f")
+        .style("font", "22px sans-serif")
+        .text("=)");
+    var sadSmiley = container.append("text")
+        .attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
+        .style("fill", "#c63d17")
+        .style("font", "22px sans-serif")
+        .text("=(");
+
     // add right border
     var rightBorder = container.append("rect")
         .attr("x", getSize().width)
@@ -275,8 +291,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     function convertTwitterCSV(d) {
         var tmp = parseDate(d.date);
-        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
-        //tmp.setTime(tmp.getTime() + offset);
         return {
             date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
@@ -286,11 +300,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Hourly data
     function convertDetailTwitterCSV(d) {
-        // Conversion to Eastern Time
         var tmp = parseDetailDate(d.date);
-        //tmp.setTime(tmp.getTime() - (5 * 60 * 60 * 1000));
-        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
-        //tmp.setTime(tmp.getTime() + offset);
         return {
             date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
@@ -300,8 +310,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     function convertEpisodesCSV(d) {
         var tmp = parseDate(d.date);
-        //var offset = tmp.getTimezoneOffset() * 60 * 1000;
-        //tmp.setTime(tmp.getTime() + offset);
         return {
             date: tmp,
             code: d.code,
@@ -334,7 +342,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var stepdate = new Date(dateRange[0]);
 
         for (var i = 0; i < data.length;) {
-            //console.log(data[i].date + " "+ stepdate);
             if ((data[i].date - stepdate) === 0) {
                 stepdate.setDate(stepdate.getDate() + 1);
                 i++;
@@ -432,9 +439,9 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var range = d3.extent(data, function (d) {
             return new Date(d.date);
         });
-        if (range[1] - range[0] < 3 * 30 * 86400000) {
+        if (range[1] - range[0] < 6 * 30 * 86400000) {
             self.startDate = range[0];
-            self.endDate = range[1];
+            self.endDate = new Date()
         }
 
         x.domain([self.startDate, self.endDate]);
@@ -512,6 +519,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .attr("y2", y(0));
         scrollbar.attr("width", s.width + 20);
         errMsg.attr("width", s.width - 20);
+        happySmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)");
+        sadSmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)");
 
         // Ensure zooming functionality after resizing
         var currentDomain = x.domain()[1] - x.domain()[0],
