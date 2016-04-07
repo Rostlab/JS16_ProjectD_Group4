@@ -310,6 +310,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     function convertEpisodesCSV(d) {
         var tmp = parseDate(d.date);
+        tmp.setDate(tmp.getDate() + 1);
+        tmp.setHours(1); // Episodes air the day after the day in the database at 1 AM in UTC
         return {
             date: tmp,
             code: d.code,
@@ -729,7 +731,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var dmn = x.domain()[1] - x.domain()[0]; // Current domain
         var fulldmn = self.xDomainBounds[1] - self.xDomainBounds[0]; // Full domain
         var w = getSize().width;
-        var dayWidth = (86400000 / dmn) * w;
+        var hourWidth = (1000 * 60 * 60 / dmn) * w;
 
         // episode rectangles        
         var szn = svg.selectAll(".episode")
@@ -737,7 +739,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 return x(d.date);
             })
             .attr("width", function (d) {
-                return dayWidth;
+                return Math.max(hourWidth, 1); // At least 1px;
             });
 
         // Zoom knob
@@ -746,7 +748,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         // Move the Labels into the center of the day 
         eLabel.selectAll('.tick text')
-            .attr('transform', 'translate(' + dayWidth / 2 + ',0)');
+            .attr('transform', 'translate(' + hourWidth / 2 + ',0)');
 
         // Custom Tick Format for the Episode Axis
         if (dmn < (self.factor * 6 * 7 * 86400000)) { // < 6 Weeks * factor : Show Title            
