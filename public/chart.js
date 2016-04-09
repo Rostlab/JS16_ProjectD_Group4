@@ -254,19 +254,6 @@ function characterChart(svg, dataURL, startDate, endDate) {
     var scrollLabel = container.append("g").attr("class", "scroll axis")
         .attr("transform", "translate(0," + (getSize().height + 50) + ")");
 
-
-    // Add y axis explanation ;)
-    var happySmiley = container.append("text")
-        .attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
-        .style("fill", "#6aaa1f")
-        .style("font", "22px sans-serif")
-        .text("=)");
-    var sadSmiley = container.append("text")
-        .attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
-        .style("fill", "#c63d17")
-        .style("font", "22px sans-serif")
-        .text("=(");
-
     // add right border
     var rightBorder = container.append("rect")
         .attr("x", getSize().width)
@@ -396,6 +383,13 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         for (var i = 0; i < data.length;) {
             if ((data[i].date - stepdate) === 0) {
+                if (i !== 0) {
+                    // Fixes daylight saving time issues
+                    var timediff = data[i].date.getTimezoneOffset() - data[i - 1].date.getTimezoneOffset();
+                    if (timediff !== 0) {
+                        stepdate = new Date(stepdate.getTime() + timediff * 60 * 1000);
+                    }
+                }
                 stepdate.setHours(stepdate.getHours() + 1);
                 i++;
             } else {
@@ -622,7 +616,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 } else {
                     // Data not existing yet.
                     if (dtl0[0] === -1) {
-                        // Lower month missing. Create entry, fill it with data in assignDefaultValues
+                        // Lower month missing. Create entry, fill it with data in assignDetailDefaultValues
                         self.detailData.push({
                             "name": dtl0filename,
                             "data": []
@@ -630,7 +624,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                         d3.csv(getDetailPrefix() + dtl0filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
                     }
                     if (dtl1[0] === -1) {
-                        // Higher month missing. Create entry, fill it with data in assignDefaultValues
+                        // Higher month missing. Create entry, fill it with data in assignDetailDefaultValues
                         self.detailData.push({
                             "name": dtl1filename,
                             "data": []
@@ -799,6 +793,17 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("x", 4)
                 .attr("y", 15)
                 .text("Score / Day");
+            // Add y axis explanation ;)
+            var happySmiley = container.append("text")
+                .attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
+                .style("fill", "#6aaa1f")
+                .style("font", "22px sans-serif")
+                .text("=)");
+            var sadSmiley = container.append("text")
+                .attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
+                .style("fill", "#c63d17")
+                .style("font", "22px sans-serif")
+                .text("=(");
 
             render();
 
