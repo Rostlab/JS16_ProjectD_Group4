@@ -19,7 +19,7 @@ function stringMonth(month) {
 function characterChart(svg, dataURL, startDate, endDate) {
     var self = this;
     var zoom = d3.behavior.zoom(); // plot zooming behavior
-    var drag = d3.behavior.drag(); // drag behavior scrollbar
+    var drag = d3.behavior.drag(); // drag behavior scrollbar    
     this.xDomainBounds = []; // Range of shown data    
     this.resize = render; // Resizing behaviour
     this.episodeData = null;
@@ -54,7 +54,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     // set margin
     var margin = {
         top: 30,
-        right: 20,
+        right: 40,
         bottom: 85,
         left: 50
     };
@@ -158,7 +158,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("y", background.attr("y") - margin.top) // for eLabel
         .attr("width", background.attr("width"))
         .attr("height", background.attr("height") + margin.top);
-    
+
     // For yAxis animations
     var svgClipper = container.append("defs").append("clipPath")
         .attr("id", "svgclip")
@@ -166,8 +166,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
         .attr("x", -margin.left)
         .attr("y", -margin.top)
         .attr("width", parseInt(svg.style('width'), 10))
-        .attr("height", parseInt(svg.style('height'), 10)-40);    
-    
+        .attr("height", parseInt(svg.style('height'), 10) - 40);
+
     // add area elements
     var pos = chart.append("path").attr("class", "area pos"),
         neg = chart.append("path").attr("class", "area neg");
@@ -194,7 +194,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
     {
         aboutMsg.append("rect")
             .attr("width", 160)
-            .attr("height", 95);
+            .attr("height", 105);
 
         aboutMsg.append("circle")
             .attr("cx", 12)
@@ -225,7 +225,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .attr("transform", "translate(24,54)")
             .text("Accumulated trend");
         aboutMsg.append("text")
-            .attr("transform", "translate(6,80)")
+            .attr("transform", "translate(6,75)")
+            .text("Time in UTC");
+        aboutMsg.append("text")
+            .attr("transform", "translate(6,95)")
             .attr("font-style", "italic")
             .text("Optimized for Chrome");
     }
@@ -270,13 +273,13 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // add Data-Type-Label
     var dataTypeLabel = container.append("g")
-        .attr("transform", "translate(10, " + (getSize().height - 60) + ")")
+        .attr("transform", "translate(10, " + (getSize().height - 55) + ")")
         .attr("class", "trendbutton noaction");
 
     function convertTwitterCSV(d) {
-        // convert string data from CSV
+        var tmp = parseDate(d.date);
         return {
-            date: parseDate(d.date), // parse date column to Date
+            date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
             neg: -d.neg // convert neg column to negative number
         };
@@ -284,17 +287,20 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
     // Hourly data
     function convertDetailTwitterCSV(d) {
+        var tmp = parseDetailDate(d.date);
         return {
-            date: parseDetailDate(d.date), // parse date column to Date
+            date: tmp, // parse date column to Date
             pos: +d.pos, // convert pos column to positive number
             neg: -d.neg // convert neg column to negative number
         };
     }
 
     function convertEpisodesCSV(d) {
-        // convert string data from CSV
+        var tmp = parseDate(d.date);
+        tmp.setDate(tmp.getDate() + 1);
+        tmp.setHours(1); // Episodes air the day after the day in the database at 1 AM in UTC
         return {
-            date: parseDate(d.date),
+            date: tmp,
             code: d.code,
             title: d.title,
             seasonStartLabel: function () {
@@ -336,6 +342,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                         neg: 0
                     });
                     stepdate.setDate(stepdate.getDate() + 1);
+
                 }
             }
         }
@@ -376,6 +383,13 @@ function characterChart(svg, dataURL, startDate, endDate) {
 
         for (var i = 0; i < data.length;) {
             if ((data[i].date - stepdate) === 0) {
+                if (i !== 0) {
+                    // Fixes daylight saving time issues
+                    var timediff = data[i].date.getTimezoneOffset() - data[i - 1].date.getTimezoneOffset();
+                    if (timediff !== 0) {
+                        stepdate = new Date(stepdate.getTime() + timediff * 60 * 1000);
+                    }
+                }
                 stepdate.setHours(stepdate.getHours() + 1);
                 i++;
             } else {
@@ -416,6 +430,16 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (typeof self.endDate === "undefined") {
             self.endDate = self.xDomainBounds[1];
         }
+
+        // Other start domain if there's less than three months of data
+        var range = d3.extent(data, function (d) {
+            return new Date(d.date);
+        });
+        if (range[1] - range[0] < 6 * 30 * 86400000) {
+            self.startDate = range[0];
+            self.endDate = new Date();
+        }
+
         x.domain([self.startDate, self.endDate]);
         scrollScale.domain(self.xDomainBounds);
 
@@ -491,6 +515,8 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .attr("y2", y(0));
         scrollbar.attr("width", s.width + 20);
         errMsg.attr("width", s.width - 20);
+        happySmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)");
+        sadSmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)");
 
         // Ensure zooming functionality after resizing
         var currentDomain = x.domain()[1] - x.domain()[0],
@@ -590,7 +616,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 } else {
                     // Data not existing yet.
                     if (dtl0[0] === -1) {
-                        // Lower month missing. Create entry, fill it with data in assignDefaultValues
+                        // Lower month missing. Create entry, fill it with data in assignDetailDefaultValues
                         self.detailData.push({
                             "name": dtl0filename,
                             "data": []
@@ -598,7 +624,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
                         d3.csv(getDetailPrefix() + dtl0filename + ".csv", convertDetailTwitterCSV, assignDetailDefaultValues);
                     }
                     if (dtl1[0] === -1) {
-                        // Higher month missing. Create entry, fill it with data in assignDefaultValues
+                        // Higher month missing. Create entry, fill it with data in assignDetailDefaultValues
                         self.detailData.push({
                             "name": dtl1filename,
                             "data": []
@@ -699,24 +725,24 @@ function characterChart(svg, dataURL, startDate, endDate) {
         var dmn = x.domain()[1] - x.domain()[0]; // Current domain
         var fulldmn = self.xDomainBounds[1] - self.xDomainBounds[0]; // Full domain
         var w = getSize().width;
-        var dayWidth = (86400000 / dmn) * w;
+        var hourWidth = (1000 * 60 * 60 / dmn) * w;
 
         // episode rectangles        
-        var szn = d3.selectAll(".episode")
+        var szn = svg.selectAll(".episode")
             .attr("x", function (d) {
                 return x(d.date);
             })
             .attr("width", function (d) {
-                return dayWidth;
+                return Math.max(hourWidth, 1); // At least 1px;
             });
 
         // Zoom knob
         scrollknob.attr("width", Math.max(w * dmn / fulldmn, 20))
-            .attr("x", w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn);
+            .attr("x", Math.min(w * (x.domain()[0] - self.xDomainBounds[0]) / fulldmn, w - 20));
 
         // Move the Labels into the center of the day 
         eLabel.selectAll('.tick text')
-            .attr('transform', 'translate(' + dayWidth / 2 + ',0)');
+            .attr('transform', 'translate(' + hourWidth / 2 + ',0)');
 
         // Custom Tick Format for the Episode Axis
         if (dmn < (self.factor * 6 * 7 * 86400000)) { // < 6 Weeks * factor : Show Title            
@@ -763,13 +789,21 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("y", 15)
                 .attr("class", "about")
                 .text("About");
-            dataTypeLabel.append("rect")
-                .attr("width", 80)
-                .attr("height", 20);
             dataTypeLabel.append("text")
                 .attr("x", 4)
                 .attr("y", 15)
                 .text("Score / Day");
+            // Add y axis explanation ;)
+            var happySmiley = container.append("text")
+                .attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
+                .style("fill", "#6aaa1f")
+                .style("font", "22px sans-serif")
+                .text("=)");
+            var sadSmiley = container.append("text")
+                .attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
+                .style("fill", "#c63d17")
+                .style("font", "22px sans-serif")
+                .text("=(");
 
             render();
 
@@ -788,13 +822,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
             plot.call(zoom);
 
             // Dragging behavior of scrollbar
-            drag.on("dragstart", function () {
-            });
+            drag.on("dragstart", function () {});
             drag.on("drag", function () {
                 self.dx += d3.event.dx;
             });
-            drag.on("dragend", function () {
-            });
+            drag.on("dragend", function () {});
             scrollknob.call(drag);
 
             // Register remaining event handlers  
@@ -803,32 +835,27 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 toggleTrend();
             });
             trendButton.on("mouseenter", function () {
-                trendButton.attr("class", "trendbutton fullOpac");
+                if (trendline.attr("class") !== "trendline") {
+                    trendButton.attr("class", "trendbutton fullOpac");
+                }
             });
             trendButton.on("mouseleave", function () {
-                trendButton.attr("class", "trendbutton");
-            });
-            trendButton.on("touchstart", function () {
-                trendButton.attr("class", "trendbutton fullOpac");
-            });
-            trendButton.on("touchend", function () {
-                trendButton.attr("class", "trendbutton");
+                if (trendline.attr("class") !== "trendline") {
+                    trendButton.attr("class", "trendbutton");
+                }
             });
             aboutButton.on("click", function () {
-                d3.event.stopImmediatePropagation();
                 toggleAbout();
             });
             aboutButton.on("mouseenter", function () {
-                aboutButton.attr("class", "trendbutton fullOpac");
+                if (aboutMsg.attr("class") !== "aboutmsg fullOpac") {
+                    aboutButton.attr("class", "trendbutton fullOpac");
+                }
             });
             aboutButton.on("mouseleave", function () {
-                aboutButton.attr("class", "trendbutton");
-            });
-            aboutButton.on("touchstart", function () {
-                aboutButton.attr("class", "trendbutton fullOpac");
-            });
-            aboutButton.on("touchend", function () {
-                aboutButton.attr("class", "trendbutton");
+                if (aboutMsg.attr("class") !== "aboutmsg fullOpac") {
+                    aboutButton.attr("class", "trendbutton");
+                }
             });
 
             aggregateZoom();
@@ -850,9 +877,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
         if (trendline.attr("class") === "trendline") {
             trendline.attr("class", "trendline noshow");
             chart.attr("class", "react");
+            trendButton.attr("class", "trendbutton");
         } else {
             trendline.attr("class", "trendline");
             chart.attr("class", "react lowOpac");
+            trendButton.attr("class", "trendbutton fullOpac");
         }
     }
 
