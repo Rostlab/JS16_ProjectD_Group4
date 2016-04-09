@@ -437,7 +437,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         });
         if (range[1] - range[0] < 6 * 30 * 86400000) {
             self.startDate = range[0];
-            self.endDate = new Date()
+            self.endDate = new Date();
         }
 
         x.domain([self.startDate, self.endDate]);
