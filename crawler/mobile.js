@@ -148,7 +148,7 @@ mobile.crawl = function(character, full) {
 
     // Number of Tweets after which retry with another "until:(lastDay)" query
     // when the history ends. For some popular characters the history ends early.
-    const retryThreshold = 3000;
+    const retryThreshold = 1000;
 
     return new Promise(function(resolve, reject) {
         // relaxed search
@@ -159,7 +159,7 @@ mobile.crawl = function(character, full) {
         let ids = [];
         let found = 0, inserted = 0;
         let retries = 0;
-        let lastDay = null;
+        let lastDay = new Date();
 
         // if we already have the maxID, then there are no new results
         function tryCache() {
