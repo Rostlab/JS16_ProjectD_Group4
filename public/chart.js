@@ -233,6 +233,10 @@ function characterChart(svg, dataURL, startDate, endDate) {
             .text("Optimized for Chrome");
     }
 
+    // Add y axis explanation ;)
+    var happySmiley = container.append("text");
+    var sadSmiley = container.append("text");
+
     // add scroll bar
     var scrollbar = container.append("rect")
         .attr("class", "scrollbar")
@@ -793,14 +797,11 @@ function characterChart(svg, dataURL, startDate, endDate) {
                 .attr("x", 4)
                 .attr("y", 15)
                 .text("Score / Day");
-            // Add y axis explanation ;)
-            var happySmiley = container.append("text")
-                .attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
+            happySmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (margin.top - 25) + ") rotate(90)")
                 .style("fill", "#6aaa1f")
                 .style("font", "22px sans-serif")
                 .text("=)");
-            var sadSmiley = container.append("text")
-                .attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
+            sadSmiley.attr("transform", "translate(" + (getSize().width + 15) + "," + (getSize().height - 25) + ") rotate(90)")
                 .style("fill", "#c63d17")
                 .style("font", "22px sans-serif")
                 .text("=(");
@@ -898,7 +899,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
         // Checks foreignObject Support
         if (document.implementation.hasFeature("www.http://w3.org/TR/SVG11/feature#Extensibility", "1.1")) {
             errMsg.append("xhtml:div")
-                .text("There seem to be no relevant tweets about this character. Sorry.")
+                .text("There are not enough relevant tweets about this character. Sorry.")
                 .attr("clip-path", "url(#clip)")
                 .attr("class", "error");
         } else {
