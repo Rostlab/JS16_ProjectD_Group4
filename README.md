@@ -1,7 +1,7 @@
 # gotsentimental [![Build Status](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4.svg?branch=develop)](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4) [![npm](https://img.shields.io/npm/v/gotsentimental.svg)](https://www.npmjs.com/package/gotsentimental)
 GoT Twitter Sentiment Analysis
 
-<img src="http://i.imgur.com/4sXNrUl.png" width=568 height=539 />
+![](http://i.imgur.com/DTjD3bt.png)
 
 _As seen on www.got.show_
 
