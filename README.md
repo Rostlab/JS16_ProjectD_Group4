@@ -1,7 +1,7 @@
 # gotsentimental [![Build Status](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4.svg?branch=develop)](https://travis-ci.org/Rostlab/JS16_ProjectD_Group4) [![npm](https://img.shields.io/npm/v/gotsentimental.svg)](https://www.npmjs.com/package/gotsentimental)
 GoT Twitter Sentiment Analysis
 
-![](http://i.imgur.com/DTjD3bt.png)
+![Image of the gotsentimental graph for character Jon Snow](http://i.imgur.com/DTjD3bt.png)
 
 _As seen on www.got.show_
 
