@@ -757,7 +757,7 @@ function characterChart(svg, dataURL, startDate, endDate) {
             eAxis.tickFormat(function (d, i) {
                 return self.episodeData[i].code;
             });
-        } else if (w > 500 || dmn < (3 * 365 * 86400000)) { //Show season start
+        } else if (w > 400 || dmn < (3 * 365 * 86400000)) { //Show season start
             eAxis.tickFormat(function (d, i) {
                 return self.episodeData[i].seasonStartLabel;
             });
